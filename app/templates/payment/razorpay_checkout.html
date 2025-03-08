@@ -1,0 +1,108 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Checkout - {{ plan.title }} - DocGen{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">Confirm Your Purchase</h4>
+                </div>
+                <div class="card-body">
+                    <div class="mb-4">
+                        <h5>{{ plan.title }}</h5>
+                        <p>{{ plan.description }}</p>
+
+                        {% if fee_details %}
+                            <div class="card mb-3">
+                                <div class="card-body">
+                                    <h6 class="mb-3">Price Breakdown</h6>
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span>Base Price:</span>
+                                        <span>₹{{ base_amount }}</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span>Transaction Fee:</span>
+                                        <span>₹{{ fee_details.transaction_fee|round(2) }}</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span>GST (18%):</span>
+                                        <span>₹{{ fee_details.gst|round(2) }}</span>
+                                    </div>
+                                    <hr>
+                                    <div class="d-flex justify-content-between fw-bold">
+                                        <span>Total:</span>
+                                        <span>₹{{ total_amount|round(2) }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        {% else %}
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="h3">₹{{ base_amount }}</span>
+                                <span class="text-muted">{{ "Monthly" if plan.name == "monthly" else "Annual" }} payment</span>
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="alert alert-info mb-4">
+                        <div class="d-flex">
+                            <div class="me-3">
+                                <i class="fas fa-info-circle fa-2x"></i>
+                            </div>
+                            <div>
+                                <p class="mb-1"><strong>Important:</strong></p>
+                                <p class="mb-0">By proceeding with this payment, you agree to our terms of service and subscription policy.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="text-center">
+                        <button id="rzp-button" class="btn btn-primary btn-lg px-5">Pay Now</button>
+                    </div>
+                </div>
+                <div class="card-footer bg-light text-center">
+                    <a href="{{ url_for('payment.plans') }}" class="text-decoration-none">
+                        <i class="fas fa-arrow-left me-2"></i> Return to Plans
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<script>
+    document.getElementById('rzp-button').onclick = function(e) {
+        var options = {
+            "key": "{{ key_id }}",
+            "amount": "{{ total_amount * 100 }}", // Amount in paise
+            "currency": "{{ currency }}",
+            "name": "DocGen",
+            "description": "{{ plan.title }} Subscription",
+            "image": "{{ url_for('static', filename='images/logo.png', _external=True) }}",
+            "order_id": "{{ order_id }}",
+            "handler": function (response) {
+                // Redirect to the success page with payment details
+                window.location.href = "{{ url_for('payment.success', _external=True) }}" +
+                    "?razorpay_payment_id=" + response.razorpay_payment_id +
+                    "&razorpay_order_id=" + response.razorpay_order_id +
+                    "&razorpay_signature=" + response.razorpay_signature;
+            },
+            "prefill": {
+                "name": "{{ user_name }}",
+                "email": "{{ user_email }}"
+            },
+            "theme": {
+                "color": "#0d6efd"
+            }
+        };
+        var rzp = new Razorpay(options);
+        rzp.open();
+        e.preventDefault();
+    }
+</script>
+{% endblock %}

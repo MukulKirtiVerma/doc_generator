@@ -1,0 +1,256 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}My Documents - DocGen{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h1 class="display-5">My Documents</h1>
+            <p class="lead">View and manage your document conversion history</p>
+        </div>
+        <div class="col-md-4 text-md-end align-self-center">
+            <a href="{{ url_for('main.upload') }}" class="btn btn-primary">
+                <i class="fas fa-plus me-2"></i> New Document
+            </a>
+        </div>
+    </div>
+    
+    <!-- Filter & Search Bar -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <form method="get" class="row g-3">
+                        <div class="col-md-4 mb-2">
+                            <label for="file_type" class="form-label">File Type</label>
+                            <select class="form-select" id="file_type" name="file_type">
+                                <option value="">All Types</option>
+                                <option value="docx" {% if request.args.get('file_type') == 'docx' %}selected{% endif %}>Word (.docx)</option>
+                                <option value="pdf" {% if request.args.get('file_type') == 'pdf' %}selected{% endif %}>PDF</option>
+                                <option value="xlsx" {% if request.args.get('file_type') == 'xlsx' %}selected{% endif %}>Excel (.xlsx)</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4 mb-2">
+                            <label for="status" class="form-label">Status</label>
+                            <select class="form-select" id="status" name="status">
+                                <option value="">All Statuses</option>
+                                <option value="completed" {% if request.args.get('status') == 'completed' %}selected{% endif %}>Completed</option>
+                                <option value="processing" {% if request.args.get('status') == 'processing' %}selected{% endif %}>Processing</option>
+                                <option value="failed" {% if request.args.get('status') == 'failed' %}selected{% endif %}>Failed</option>
+                                <option value="pending" {% if request.args.get('status') == 'pending' %}selected{% endif %}>Pending</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4 mb-2">
+                            <label for="search" class="form-label">Search</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="search" name="search" placeholder="Search by filename" value="{{ request.args.get('search', '') }}">
+                                <button class="btn btn-outline-secondary" type="submit">
+                                    <i class="fas fa-search"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Documents List -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-body">
+                    {% if documents.items %}
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle">
+                                <thead>
+                                    <tr>
+                                        <th>File Name</th>
+                                        <th>Type</th>
+                                        <th>Status</th>
+                                        <th>Created</th>
+                                        <th>Size</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for doc in documents.items %}
+                                    <tr>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <div class="me-3">
+                                                    {% if doc.file_type == 'docx' %}
+                                                        <i class="far fa-file-word text-primary fa-2x"></i>
+                                                    {% elif doc.file_type == 'pdf' %}
+                                                        <i class="far fa-file-pdf text-danger fa-2x"></i>
+                                                    {% elif doc.file_type == 'xlsx' %}
+                                                        <i class="far fa-file-excel text-success fa-2x"></i>
+                                                    {% else %}
+                                                        <i class="far fa-file fa-2x"></i>
+                                                    {% endif %}
+                                                </div>
+                                                <div>
+                                                    <h6 class="mb-0">{{ doc.original_filename }}</h6>
+                                                    <small class="text-muted">{{ doc.anthropic_request_id }}</small>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-secondary">{{ doc.file_type.upper() }}</span>
+                                        </td>
+                                        <td>
+                                            {% if doc.status == 'completed' %}
+                                                <span class="badge bg-success">Completed</span>
+                                            {% elif doc.status == 'processing' %}
+                                                <span class="badge bg-warning text-dark">Processing</span>
+                                            {% elif doc.status == 'failed' %}
+                                                <span class="badge bg-danger">Failed</span>
+                                            {% else %}
+                                                <span class="badge bg-secondary">Pending</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ doc.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                                        <td>{{ (doc.file_size / 1024 / 1024) | round(2) }} MB</td>
+                                        <td>
+                                            <div class="btn-group" role="group">
+                                                <a href="{{ url_for('main.process_document', document_id=doc.id) }}" class="btn btn-sm btn-outline-primary" title="View Details">
+                                                    <i class="fas fa-info-circle"></i>
+                                                </a>
+                                                {% if doc.status == 'completed' %}
+                                                    <a href="{{ url_for('main.download_document', document_id=doc.id) }}" class="btn btn-sm btn-outline-success" title="Download">
+                                                        <i class="fas fa-download"></i>
+                                                    </a>
+                                                {% endif %}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <!-- Pagination -->
+                        <nav aria-label="Page navigation">
+                            <ul class="pagination justify-content-center mt-4">
+                                {% if documents.has_prev %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="{{ url_for('main.documents', page=documents.prev_num, file_type=request.args.get('file_type', ''), status=request.args.get('status', ''), search=request.args.get('search', '')) }}">
+                                            <i class="fas fa-chevron-left"></i> Previous
+                                        </a>
+                                    </li>
+                                {% else %}
+                                    <li class="page-item disabled">
+                                        <span class="page-link"><i class="fas fa-chevron-left"></i> Previous</span>
+                                    </li>
+                                {% endif %}
+                                
+                                {% for page_num in documents.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+                                    {% if page_num %}
+                                        {% if page_num == documents.page %}
+                                            <li class="page-item active">
+                                                <span class="page-link">{{ page_num }}</span>
+                                            </li>
+                                        {% else %}
+                                            <li class="page-item">
+                                                <a class="page-link" href="{{ url_for('main.documents', page=page_num, file_type=request.args.get('file_type', ''), status=request.args.get('status', ''), search=request.args.get('search', '')) }}">{{ page_num }}</a>
+                                            </li>
+                                        {% endif %}
+                                    {% else %}
+                                        <li class="page-item disabled">
+                                            <span class="page-link">...</span>
+                                        </li>
+                                    {% endif %}
+                                {% endfor %}
+                                
+                                {% if documents.has_next %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="{{ url_for('main.documents', page=documents.next_num, file_type=request.args.get('file_type', ''), status=request.args.get('status', ''), search=request.args.get('search', '')) }}">
+                                            Next <i class="fas fa-chevron-right"></i>
+                                        </a>
+                                    </li>
+                                {% else %}
+                                    <li class="page-item disabled">
+                                        <span class="page-link">Next <i class="fas fa-chevron-right"></i></span>
+                                    </li>
+                                {% endif %}
+                            </ul>
+                        </nav>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-file-alt text-muted mb-3" style="font-size: 4rem;"></i>
+                            <h3>No documents found</h3>
+                            {% if request.args.get('file_type') or request.args.get('status') or request.args.get('search') %}
+                                <p>No documents match your filters. <a href="{{ url_for('main.documents') }}">Clear filters</a></p>
+                            {% else %}
+                                <p>You haven't converted any documents yet.</p>
+                                <a href="{{ url_for('main.upload') }}" class="btn btn-primary">
+                                    <i class="fas fa-upload me-2"></i> Upload Your First Document
+                                </a>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Usage Summary -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card bg-light">
+                <div class="card-body">
+                    <h5>Usage Summary</h5>
+                    <div class="row">
+                        <div class="col-md-4 mb-3 mb-md-0">
+                            <div class="d-flex align-items-center">
+                                <div class="me-3">
+                                    <i class="fas fa-file-alt fa-2x text-primary"></i>
+                                </div>
+                                <div>
+                                    <h3 class="mb-0">{{ documents.total }}</h3>
+                                    <p class="text-muted mb-0">Total Documents</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3 mb-md-0">
+                            <div class="d-flex align-items-center">
+                                <div class="me-3">
+                                    <i class="fas fa-check-circle fa-2x text-success"></i>
+                                </div>
+                                <div>
+                                    <h3 class="mb-0">{{ current_user.usage_count }}</h3>
+                                    <p class="text-muted mb-0">Processed Documents</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            {% if current_user.is_paid_user %}
+                                <div class="d-flex align-items-center">
+                                    <div class="me-3">
+                                        <i class="fas fa-infinity fa-2x text-primary"></i>
+                                    </div>
+                                    <div>
+                                        <h3 class="mb-0">Unlimited</h3>
+                                        <p class="text-muted mb-0">Remaining Conversions</p>
+                                    </div>
+                                </div>
+                            {% else %}
+                                <div class="d-flex align-items-center">
+                                    <div class="me-3">
+                                        <i class="fas fa-hourglass-half fa-2x text-warning"></i>
+                                    </div>
+                                    <div>
+                                        <h3 class="mb-0">{{ config['FREE_USER_ATTEMPTS'] - current_user.usage_count }}</h3>
+                                        <p class="text-muted mb-0">Remaining Conversions</p>
+                                    </div>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

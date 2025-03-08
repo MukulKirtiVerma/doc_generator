@@ -1,0 +1,189 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Invoice - DocGen{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0">
+                        {% if payment.payment_method == 'razorpay' %}
+                            Tax Invoice
+                        {% else %}
+                            Payment Receipt
+                        {% endif %}
+                    </h4>
+                    <button class="btn btn-sm btn-outline-primary" onclick="window.print();">
+                        <i class="fas fa-print me-2"></i> Print
+                    </button>
+                </div>
+                <div class="card-body p-4">
+                    <!-- Header Section -->
+                    <div class="row mb-4">
+                        <div class="col-7">
+                            <h3 class="mb-0">DocGen</h3>
+                            <p class="text-muted mb-0">123 Tech Plaza, Suite 400</p>
+                            <p class="text-muted mb-0">San Francisco, CA 94105</p>
+                            <p class="text-muted mb-0">India</p>
+                            {% if payment.payment_method == 'razorpay' %}
+                                <p class="text-muted mb-0">GSTIN: 27ABCDE1234F1Z5</p>
+                            {% endif %}
+                        </div>
+                        <div class="col-5 text-end">
+                            <h5 class="mb-1">
+                                {% if payment.payment_method == 'razorpay' %}
+                                    Invoice #INV-{{ payment.created_at.strftime('%Y%m%d') }}-{{ payment.id }}
+                                {% else %}
+                                    Receipt #{{ payment.id }}
+                                {% endif %}
+                            </h5>
+                            <p class="mb-1">Date: {{ payment.created_at.strftime('%B %d, %Y') }}</p>
+                            <p class="mb-1">Payment Method:
+                                {% if payment.payment_method == 'razorpay' %}
+                                    Razorpay
+                                {% else %}
+                                    Stripe
+                                {% endif %}
+                            </p>
+                            <p class="mb-1">Status:
+                                <span class="badge bg-success">{{ payment.status }}</span>
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Customer Section -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <div class="bg-light p-3 rounded">
+                                <h5 class="mb-1">Bill To:</h5>
+                                <p class="mb-0">{{ current_user.username or current_user.email }}</p>
+                                <p class="mb-0">{{ current_user.email }}</p>
+                                {% if payment.payment_method == 'razorpay' %}
+                                    <p class="mb-0">Place of Supply: India</p>
+                                    <p class="mb-0">State: Maharashtra, Code: 27</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Items Section -->
+                    <div class="table-responsive mb-4">
+                        <table class="table table-bordered">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Description</th>
+                                    {% if payment.payment_method == 'razorpay' and invoice_data %}
+                                        <th class="text-end">Taxable Amount</th>
+                                        <th class="text-end">Transaction Fee</th>
+                                        <th class="text-end">GST</th>
+                                    {% endif %}
+                                    <th class="text-end">Amount</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>
+                                        DocGen {{ payment.subscription_type|capitalize }} Subscription
+                                    </td>
+                                    {% if payment.payment_method == 'razorpay' and invoice_data %}
+                                        <td class="text-end">₹{{ payment.amount|round(2) }}</td>
+                                        <td class="text-end">₹{{ invoice_data.transaction_fee|round(2) }}</td>
+                                        <td class="text-end">₹{{ invoice_data.total_tax|round(2) }}</td>
+                                        <td class="text-end">₹{{ invoice_data.total_amount|round(2) }}</td>
+                                    {% else %}
+                                        <td class="text-end">{{ payment.currency }} {{ payment.amount|round(2) }}</td>
+                                    {% endif %}
+                                </tr>
+                            </tbody>
+                            {% if payment.payment_method == 'razorpay' and invoice_data %}
+                                <tfoot class="table-light">
+                                    <tr>
+                                        <th colspan="4" class="text-end">Total Amount:</th>
+                                        <th class="text-end">₹{{ invoice_data.total_amount|round(2) }}</th>
+                                    </tr>
+                                </tfoot>
+                            {% endif %}
+                        </table>
+                    </div>
+
+                    <!-- Tax Breakdown Section (for Razorpay/India) -->
+                    {% if payment.payment_method == 'razorpay' and invoice_data %}
+                        <div class="mb-4">
+                            <h5 class="mb-3">Tax Details:</h5>
+                            <div class="table-responsive">
+                                <table class="table table-bordered">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>HSN/SAC</th>
+                                            <th>Taxable Value</th>
+                                            <th>CGST Rate</th>
+                                            <th>CGST Amount</th>
+                                            <th>SGST Rate</th>
+                                            <th>SGST Amount</th>
+                                            <th>Total Tax</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>998431</td>
+                                            <td>₹{{ invoice_data.transaction_fee|round(2) }}</td>
+                                            <td>9%</td>
+                                            <td>₹{{ invoice_data.cgst_amount|round(2) }}</td>
+                                            <td>9%</td>
+                                            <td>₹{{ invoice_data.sgst_amount|round(2) }}</td>
+                                            <td>₹{{ invoice_data.total_tax|round(2) }}</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    {% endif %}
+
+                    <!-- Payment Information -->
+                    <div class="bg-light p-3 rounded mb-3">
+                        <h5 class="mb-2">Payment Information:</h5>
+                        <p class="mb-1"><strong>Transaction ID:</strong> {{ payment.stripe_payment_id }}</p>
+                        <p class="mb-0"><strong>Payment Date:</strong> {{ payment.created_at.strftime('%B %d, %Y') }}</p>
+                    </div>
+
+                    <!-- Footer Note -->
+                    <div class="text-center mt-4">
+                        <p class="text-muted mb-0">
+                            {% if payment.payment_method == 'razorpay' %}
+                                This is a computer-generated invoice and does not require a physical signature.
+                            {% else %}
+                                Thank you for your business!
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block styles %}
+<style>
+    @media print {
+        body * {
+            visibility: hidden;
+        }
+        .card, .card * {
+            visibility: visible;
+        }
+        .card {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            box-shadow: none !important;
+        }
+        .btn-outline-primary {
+            display: none;
+        }
+    }
+</style>
+{% endblock %}

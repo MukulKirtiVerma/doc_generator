@@ -1,0 +1,234 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Your Profile - DocGen{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="display-5">Profile Settings</h1>
+            <p class="lead">Manage your account information and preferences</p>
+        </div>
+    </div>
+    
+    <div class="row">
+        <!-- Left sidebar with profile photo and stats -->
+        <div class="col-lg-4 mb-4">
+            <div class="card shadow mb-4">
+                <div class="card-body text-center">
+                    {% if current_user.profile_picture %}
+                        <img src="{{ current_user.profile_picture }}" class="rounded-circle img-fluid mb-3" style="width: 150px; height: 150px; object-fit: cover;" alt="Profile Picture">
+                    {% else %}
+                        <div class="rounded-circle bg-primary d-flex justify-content-center align-items-center mx-auto mb-3" style="width: 150px; height: 150px;">
+                            <span class="text-white display-4">{{ current_user.username[0]|upper if current_user.username else current_user.email[0]|upper }}</span>
+                        </div>
+                    {% endif %}
+                    
+                    <h3>{{ current_user.username or current_user.email.split('@')[0] }}</h3>
+                    <p class="text-muted">{{ current_user.email }}</p>
+                    
+                    <div class="d-grid mt-3">
+                        {% if current_user.google_id %}
+                            <button class="btn btn-outline-secondary" disabled>
+                                <i class="fab fa-google me-2"></i> Connected with Google
+                            </button>
+                        {% else %}
+                            <a href="{{ url_for('auth.google_login') }}" class="btn btn-outline-danger">
+                                <i class="fab fa-google me-2"></i> Connect with Google
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Account Statistics -->
+            <div class="card shadow mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Account Information</h5>
+                </div>
+                <div class="card-body">
+                    <!-- Plan Status -->
+                    <div class="mb-3 pb-3 border-bottom">
+                        <h6>Subscription Plan</h6>
+                        {% if current_user.is_paid_user and current_user.subscription_status == 'active' %}
+                            <span class="badge bg-success">Premium</span>
+                            <p class="text-muted small mb-0">Valid until: {{ current_user.subscription_end_date.strftime('%Y-%m-%d') }}</p>
+                        {% else %}
+                            <span class="badge bg-secondary">Free</span>
+                            <p class="text-muted small mb-0">{{ config['FREE_USER_ATTEMPTS'] - current_user.usage_count }} conversions remaining</p>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Document Count -->
+                    <div class="mb-3 pb-3 border-bottom">
+                        <h6>Documents Processed</h6>
+                        <p class="mb-0">{{ current_user.usage_count }}</p>
+                    </div>
+                    
+                    <!-- Account Age -->
+                    <div class="mb-0">
+                        <h6>Member Since</h6>
+                        <p class="mb-0">{{ current_user.created_at.strftime('%Y-%m-%d') }}</p>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    {% if current_user.is_paid_user %}
+                        <a href="{{ url_for('payment.manage_subscription') }}" class="btn btn-outline-primary btn-sm">
+                            <i class="fas fa-cog me-2"></i> Manage Subscription
+                        </a>
+                    {% else %}
+                        <a href="{{ url_for('payment.plans') }}" class="btn btn-primary btn-sm">
+                            <i class="fas fa-arrow-up me-2"></i> Upgrade Account
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Main content - profile forms -->
+        <div class="col-lg-8">
+            <!-- Profile Settings Form -->
+            <div class="card shadow mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Profile Information</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        <div class="mb-3">
+                            <label for="username" class="form-label">Username</label>
+                            <input type="text" class="form-control" id="username" name="username" value="{{ current_user.username or '' }}">
+                            <div class="form-text">This will be displayed instead of your email address.</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Email Address</label>
+                            <input type="email" class="form-control" id="email" value="{{ current_user.email }}" disabled>
+                            <div class="form-text">Your email cannot be changed. It is used for login and notifications.</div>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-2"></i> Update Profile
+                        </button>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Change Password Form -->
+            <div class="card shadow mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Change Password</h5>
+                </div>
+                <div class="card-body">
+                    {% if current_user.password_hash %}
+                        <form method="post">
+                            <div class="mb-3">
+                                <label for="current_password" class="form-label">Current Password</label>
+                                <input type="password" class="form-control" id="current_password" name="current_password" required>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="new_password" class="form-label">New Password</label>
+                                <input type="password" class="form-control" id="new_password" name="new_password" 
+                                       pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}"
+                                       title="Must contain at least one number, one uppercase and lowercase letter, and at least 8 characters" required>
+                                <div class="form-text">Password must be at least 8 characters with numbers, uppercase and lowercase letters.</div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="confirm_password" class="form-label">Confirm New Password</label>
+                                <input type="password" class="form-control" id="confirm_password" name="confirm_password" required>
+                            </div>
+                            
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-key me-2"></i> Change Password
+                            </button>
+                        </form>
+                    {% else %}
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i> You're signed in with Google, so you don't have a password to change.
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- API Key Settings (for paid users) -->
+            <div class="card shadow mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Anthropic API Settings</h5>
+                </div>
+                <div class="card-body">
+                    {% if current_user.is_paid_user %}
+                        <p>As a premium user, you can provide your own Anthropic API key for better customization and control.</p>
+                        <form method="post">
+                            <div class="mb-3">
+                                <label for="anthropic_api_key" class="form-label">Your Anthropic API Key</label>
+                                <input type="password" class="form-control" id="anthropic_api_key" name="anthropic_api_key" 
+                                       value="{{ current_user.anthropic_api_key or '' }}" autocomplete="off">
+                                <div class="form-text">If provided, this key will be used instead of our default key for your requests.</div>
+                            </div>
+                            
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-2"></i> Save API Key
+                            </button>
+                        </form>
+                    {% else %}
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i> Custom Anthropic API key settings are available for premium users only.
+                            <br>
+                            <a href="{{ url_for('payment.plans') }}" class="alert-link">Upgrade your account</a> to use your own API key.
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Privacy and Security -->
+            <div class="card shadow">
+                <div class="card-header">
+                    <h5 class="mb-0">Privacy and Security</h5>
+                </div>
+                <div class="card-body">
+                    <div class="list-group">
+                        <a href="#" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="mb-1">Two-Factor Authentication</h6>
+                                <p class="mb-0 text-muted small">Add an extra layer of security to your account</p>
+                            </div>
+                            <span class="badge bg-secondary">Coming Soon</span>
+                        </a>
+                        <a href="#" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="mb-1">Download Your Data</h6>
+                                <p class="mb-0 text-muted small">Get a copy of all your document history</p>
+                            </div>
+                            <i class="fas fa-chevron-right text-muted"></i>
+                        </a>
+                        <a href="#" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center text-danger">
+                            <div>
+                                <h6 class="mb-1 text-danger">Delete Account</h6>
+                                <p class="mb-0 text-muted small">Permanently delete your account and all data</p>
+                            </div>
+                            <i class="fas fa-chevron-right text-danger"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Check if passwords match
+    document.getElementById('confirm_password')?.addEventListener('input', function() {
+        const password = document.getElementById('new_password').value;
+        const confirmPassword = this.value;
+        
+        if (password !== confirmPassword) {
+            this.setCustomValidity('Passwords do not match');
+        } else {
+            this.setCustomValidity('');
+        }
+    });
+</script>
+{% endblock %}

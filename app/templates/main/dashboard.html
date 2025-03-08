@@ -1,0 +1,157 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Dashboard - DocGen{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="display-5">Dashboard</h1>
+            <p class="lead">Welcome back, {{ current_user.username or current_user.email.split('@')[0] }}!</p>
+        </div>
+    </div>
+    
+    <!-- User Status Card -->
+    <div class="row mb-4">
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 border-primary">
+                <div class="card-body">
+                    <h5 class="card-title">Account Status</h5>
+                    {% if current_user.is_paid_user and current_user.subscription_status == 'active' %}
+                        <div class="badge bg-success mb-3">Pro Account</div>
+                        <p class="card-text">Your subscription is active until {{ current_user.subscription_end_date.strftime('%Y-%m-%d') }}</p>
+                        <a href="{{ url_for('payment.manage_subscription') }}" class="btn btn-outline-primary">Manage Subscription</a>
+                    {% else %}
+                        <div class="badge bg-secondary mb-3">Free Account</div>
+                        <p class="card-text">
+                            You have used {{ current_user.usage_count }} of {{ config['FREE_USER_ATTEMPTS'] }} free conversions.
+                            {% if remaining_attempts <= 0 %}
+                                <span class="text-danger">No conversions remaining.</span>
+                            {% endif %}
+                        </p>
+                        <a href="{{ url_for('payment.plans') }}" class="btn btn-primary">Upgrade to Pro</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-8 mb-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">Quick Actions</h5>
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <a href="{{ url_for('main.upload') }}" class="btn btn-primary d-flex flex-column align-items-center p-3 h-100 w-100">
+                                <i class="fas fa-upload mb-2" style="font-size: 1.5rem;"></i>
+                                <span>Upload Image</span>
+                            </a>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <a href="{{ url_for('main.documents') }}" class="btn btn-outline-primary d-flex flex-column align-items-center p-3 h-100 w-100">
+                                <i class="fas fa-file-alt mb-2" style="font-size: 1.5rem;"></i>
+                                <span>My Documents</span>
+                            </a>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <a href="{{ url_for('auth.profile') }}" class="btn btn-outline-primary d-flex flex-column align-items-center p-3 h-100 w-100">
+                                <i class="fas fa-user-cog mb-2" style="font-size: 1.5rem;"></i>
+                                <span>Profile Settings</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Recent Documents Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Recent Documents</h5>
+                    <a href="{{ url_for('main.documents') }}" class="btn btn-sm btn-outline-primary">View All</a>
+                </div>
+                <div class="card-body">
+                    {% if documents %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Filename</th>
+                                        <th>Type</th>
+                                        <th>Status</th>
+                                        <th>Created</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for doc in documents %}
+                                    <tr>
+                                        <td>{{ doc.original_filename }}</td>
+                                        <td><span class="badge bg-secondary">{{ doc.file_type }}</span></td>
+                                        <td>
+                                            {% if doc.status == 'completed' %}
+                                                <span class="badge bg-success">Completed</span>
+                                            {% elif doc.status == 'processing' %}
+                                                <span class="badge bg-warning text-dark">Processing</span>
+                                            {% elif doc.status == 'failed' %}
+                                                <span class="badge bg-danger">Failed</span>
+                                            {% else %}
+                                                <span class="badge bg-secondary">Pending</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ doc.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                                        <td>
+                                            <a href="{{ url_for('main.process_document', document_id=doc.id) }}" class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            {% if doc.status == 'completed' %}
+                                                <a href="{{ url_for('main.download_document', document_id=doc.id) }}" class="btn btn-sm btn-outline-success">
+                                                    <i class="fas fa-download"></i>
+                                                </a>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-file-alt text-muted mb-3" style="font-size: 3rem;"></i>
+                            <p>You haven't converted any documents yet.</p>
+                            <a href="{{ url_for('main.upload') }}" class="btn btn-primary">Upload Your First Document</a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Tips Section -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card bg-light">
+                <div class="card-body">
+                    <h5 class="card-title">Tips & Features</h5>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <ul class="list-unstyled">
+                                <li class="mb-2"><i class="fas fa-lightbulb text-warning me-2"></i> Use high-quality images for best results</li>
+                                <li class="mb-2"><i class="fas fa-lightbulb text-warning me-2"></i> Choose Excel format for tabular data</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <ul class="list-unstyled">
+                                <li class="mb-2"><i class="fas fa-lightbulb text-warning me-2"></i> PDF is best for preserving exact layout</li>
+                                <li class="mb-2"><i class="fas fa-lightbulb text-warning me-2"></i> Word format allows for easy editing</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

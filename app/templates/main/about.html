@@ -1,0 +1,127 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}About Us - DocGen{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Hero Section -->
+    <div class="row mb-5">
+        <div class="col-lg-8 mx-auto text-center">
+            <h1 class="display-4">About DocGen</h1>
+            <p class="lead">We're on a mission to make document conversion simple, accurate, and accessible for everyone.</p>
+        </div>
+    </div>
+
+    <!-- Our Story Section -->
+    <div class="row mb-5">
+        <div class="col-lg-6">
+            <h2>Our Story</h2>
+            <p>DocGen was born out of frustration with existing document conversion tools that didn't preserve formatting or required complex software installations.</p>
+            <p>Our founding team of AI engineers and document specialists came together in 2024 with a simple goal: create an intelligent, cloud-based solution that could transform images into perfectly formatted documents with just a few clicks.</p>
+            <p>By leveraging Anthropic's Claude AI model, we've developed a platform that understands document structure and can recreate it in popular formats. What used to take hours of manual work can now be done in seconds.</p>
+        </div>
+        <div class="col-lg-6">
+            <img src="{{ url_for('static', filename='images/about-team.jpg') }}" alt="DocGen Team" class="img-fluid rounded shadow">
+        </div>
+    </div>
+
+    <!-- Our Mission Section -->
+    <div class="row mb-5 py-5 bg-light rounded">
+        <div class="col-lg-8 mx-auto text-center">
+            <h2>Our Mission</h2>
+            <p class="lead">To empower individuals and businesses by making document digitization intelligent, efficient, and accessible.</p>
+        </div>
+    </div>
+
+    <!-- Values Section -->
+    <div class="row mb-5">
+        <div class="col-12 text-center mb-4">
+            <h2>Our Core Values</h2>
+        </div>
+
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <i class="fas fa-lightbulb fa-3x text-primary mb-3"></i>
+                    <h3>Innovation</h3>
+                    <p>We continuously push the boundaries of what's possible with AI and document processing technology.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <i class="fas fa-shield-alt fa-3x text-primary mb-3"></i>
+                    <h3>Security</h3>
+                    <p>We prioritize the security and privacy of your documents, with strict data protection standards.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <i class="fas fa-users fa-3x text-primary mb-3"></i>
+                    <h3>Accessibility</h3>
+                    <p>We believe powerful technology should be accessible to everyone, which is why we offer a free tier.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Team Section -->
+    <div class="row mb-5">
+        <div class="col-12 text-center mb-4">
+            <h2>Our Team</h2>
+            <p class="lead">Meet the people behind DocGen</p>
+        </div>
+
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <img src="{{ url_for('static', filename='images/team-ceo.jpg') }}" class="card-img-top" alt="CEO">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Alex Johnson</h5>
+                    <p class="text-muted">Founder & CEO</p>
+                    <p class="card-text">Former AI research lead with a passion for document intelligence and user experience.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <img src="{{ url_for('static', filename='images/team-cto.jpg') }}" class="card-img-top" alt="CTO">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Maria Rodriguez</h5>
+                    <p class="text-muted">CTO</p>
+                    <p class="card-text">AI and machine learning expert with a background in OCR and document processing systems.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <img src="{{ url_for('static', filename='images/team-designer.jpg') }}" class="card-img-top" alt="Designer">
+                <div class="card-body text-center">
+                    <h5 class="card-title">David Kim</h5>
+                    <p class="text-muted">Lead Designer</p>
+                    <p class="card-text">UX/UI specialist focused on creating intuitive and accessible document workflows.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CTA Section -->
+    <div class="row mt-5 text-center">
+        <div class="col-lg-8 mx-auto">
+            <div class="card bg-primary text-white p-4">
+                <h3>Ready to Transform Your Documents?</h3>
+                <p class="lead">Join thousands of users who are already saving time with DocGen.</p>
+                <div>
+                    <a href="{{ url_for('auth.signup') }}" class="btn btn-light px-4 py-2">Get Started Free</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

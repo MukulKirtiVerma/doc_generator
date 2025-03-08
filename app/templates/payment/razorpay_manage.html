@@ -1,0 +1,171 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Manage Subscription - DocGen{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h1 class="display-5">Manage Your Subscription</h1>
+            <p class="lead">View and manage your Razorpay subscription details</p>
+        </div>
+        <div class="col-md-4 text-end">
+            <a href="{{ url_for('main.dashboard') }}" class="btn btn-outline-primary">
+                <i class="fas fa-arrow-left me-2"></i> Back to Dashboard
+            </a>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-lg-8">
+            <!-- Current Subscription -->
+            <div class="card shadow mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">Current Subscription</h4>
+                </div>
+                <div class="card-body">
+                    {% if current_user.is_paid_user and current_user.subscription_status == 'active' %}
+                        <div class="d-flex align-items-center mb-3">
+                            <span class="badge bg-success me-2 p-2">Active</span>
+                            {% if current_user.subscription_type == 'monthly' %}
+                                <span class="h5 mb-0">Monthly Premium Plan</span>
+                            {% elif current_user.subscription_type == 'yearly' %}
+                                <span class="h5 mb-0">Yearly Premium Plan</span>
+                            {% else %}
+                                <span class="h5 mb-0">Premium Plan</span>
+                            {% endif %}
+                        </div>
+                        
+                        <p class="mb-3">Your subscription will automatically expire on {{ current_user.subscription_end_date.strftime('%B %d, %Y') }}. You'll need to renew manually before it expires to maintain access to premium features.</p>
+                        
+                        <div class="alert alert-info">
+                            <div class="d-flex">
+                                <div class="me-3">
+                                    <i class="fas fa-info-circle fa-2x"></i>
+                                </div>
+                                <div>
+                                    <p class="mb-1"><strong>Note:</strong></p>
+                                    <p class="mb-0">Razorpay subscriptions are non-recurring. You'll receive an email reminder before your subscription expires so you can renew it.</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-4">
+                            <form action="{{ url_for('payment.cancel_subscription') }}" method="post" onsubmit="return confirm('Are you sure you want to cancel your subscription? You will still have access until the end of your billing period.');">
+                                <button type="submit" class="btn btn-outline-danger">
+                                    <i class="fas fa-times-circle me-2"></i> Cancel Subscription
+                                </button>
+                            </form>
+                        </div>
+                    {% elif current_user.subscription_status == 'cancelled' or current_user.subscription_status == 'expired' %}
+                        <div class="d-flex align-items-center mb-3">
+                            <span class="badge bg-warning text-dark me-2 p-2">{{ current_user.subscription_status | capitalize }}</span>
+                            <span class="h5 mb-0">Your subscription has {{ current_user.subscription_status }}</span>
+                        </div>
+                        
+                        {% if current_user.subscription_end_date and current_user.subscription_end_date > now %}
+                            <p class="mb-3">You will continue to have access to premium features until {{ current_user.subscription_end_date.strftime('%B %d, %Y') }}.</p>
+                        {% else %}
+                            <p class="mb-3">Your premium access has ended.</p>
+                        {% endif %}
+                        
+                        <div class="mt-4">
+                            <a href="{{ url_for('payment.plans') }}" class="btn btn-primary">
+                                <i class="fas fa-sync me-2"></i> Renew Subscription
+                            </a>
+                        </div>
+                    {% else %}
+                        <p>You don't have an active subscription.</p>
+                        <div class="mt-4">
+                            <a href="{{ url_for('payment.plans') }}" class="btn btn-primary">
+                                <i class="fas fa-arrow-up me-2"></i> Upgrade to Premium
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Payment History -->
+            <div class="card shadow mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Payment History</h5>
+                </div>
+                <div class="card-body">
+                    {% set payments = current_user.payment_history|selectattr('payment_method', 'equalto', 'razorpay')|list %}
+                    
+                    {% if payments %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Plan</th>
+                                        <th>Amount</th>
+                                        <th>Payment ID</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for payment in payments %}
+                                        <tr>
+                                            <td>{{ payment.created_at.strftime('%Y-%m-%d') }}</td>
+                                            <td>{{ payment.subscription_type|capitalize }} Plan</td>
+                                            <td>₹{{ payment.amount }}</td>
+                                            <td>
+                                                <span class="text-muted">{{ payment.stripe_payment_id[:8] }}...</span>
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-success">{{ payment.status }}</span>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p class="text-center py-4">No payment history available.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4">
+            <!-- Subscription Benefits -->
+            <div class="card shadow mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Your Premium Benefits</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item">
+                            <i class="fas fa-check-circle text-success me-2"></i> Unlimited document conversions
+                        </li>
+                        <li class="list-group-item">
+                            <i class="fas fa-check-circle text-success me-2"></i> Premium OCR quality
+                        </li>
+                        <li class="list-group-item">
+                            <i class="fas fa-check-circle text-success me-2"></i> Custom Anthropic API key
+                        </li>
+                        <li class="list-group-item">
+                            <i class="fas fa-check-circle text-success me-2"></i> Priority support
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            
+            <!-- Help & Support -->
+            <div class="card shadow">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Need Help?</h5>
+                </div>
+                <div class="card-body">
+                    <p>If you have any questions about your subscription or payments, please contact our support team.</p>
+                    <a href="{{ url_for('main.contact') }}" class="btn btn-outline-primary w-100">
+                        <i class="fas fa-envelope me-2"></i> Contact Support
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

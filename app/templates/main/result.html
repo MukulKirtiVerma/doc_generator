@@ -1,0 +1,122 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Document Result - DocGen{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">Document Conversion Result</h4>
+                </div>
+                <div class="card-body">
+                    <!-- Processing status section -->
+                    {% if document.status == 'processing' %}
+                        <div class="text-center py-5">
+                            <div class="spinner-border text-primary mb-4" style="width: 3rem; height: 3rem;" role="status">
+                                <span class="visually-hidden">Processing...</span>
+                            </div>
+                            <h3>Processing your document...</h3>
+                            <p class="text-muted">This may take a few moments depending on the complexity of your image.</p>
+                            <div class="progress mt-4">
+                                <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                                     role="progressbar" style="width: 100%"></div>
+                            </div>
+                        </div>
+                    
+                    <!-- Failed conversion section -->
+                    {% elif document.status == 'failed' %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-exclamation-triangle text-danger mb-3" style="font-size: 4rem;"></i>
+                            <h3>Conversion Failed</h3>
+                            <p class="text-muted">We encountered an error while processing your document.</p>
+                            
+                            {% if document.error_message %}
+                                <div class="alert alert-danger mt-4">
+                                    <strong>Error details:</strong> {{ document.error_message }}
+                                </div>
+                            {% endif %}
+                            
+                            <div class="mt-4">
+                                <a href="{{ url_for('main.upload') }}" class="btn btn-primary">
+                                    <i class="fas fa-redo me-2"></i> Try Again
+                                </a>
+                            </div>
+                        </div>
+                    
+                    <!-- Successful conversion section -->
+                    {% elif document.status == 'completed' %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-check-circle text-success mb-3" style="font-size: 4rem;"></i>
+                            <h3>Conversion Successful!</h3>
+                            <p class="text-muted">Your document has been processed and is ready for download.</p>
+                        </div>
+                        
+                        <div class="card mb-4">
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <h5>Original File</h5>
+                                        <p><strong>Filename:</strong> {{ document.original_filename }}</p>
+                                        <p><strong>Size:</strong> {{ (document.file_size / 1024 / 1024) | round(2) }} MB</p>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <h5>Output Document</h5>
+                                        <p><strong>Format:</strong> {{ document.file_type.upper() }}</p>
+                                        <p><strong>Created:</strong> {{ document.updated_at.strftime('%Y-%m-%d %H:%M') }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="d-grid gap-3">
+                            <a href="{{ url_for('main.download_document', document_id=document.id) }}" 
+                               class="btn btn-success btn-lg">
+                                <i class="fas fa-download me-2"></i> Download Document
+                            </a>
+                            <a href="{{ url_for('main.upload') }}" class="btn btn-primary">
+                                <i class="fas fa-plus me-2"></i> Convert Another Document
+                            </a>
+                        </div>
+                        
+                        <!-- Usage information -->
+                        {% if not current_user.is_paid_user %}
+                            <div class="alert alert-info mt-4">
+                                <i class="fas fa-info-circle me-2"></i>
+                                You have {{ config['FREE_USER_ATTEMPTS'] - current_user.usage_count }} free conversions remaining.
+                                <a href="{{ url_for('payment.plans') }}" class="alert-link">Upgrade to a paid plan</a> for unlimited conversions.
+                            </div>
+                        {% endif %}
+                    
+                    <!-- Pending status (shouldn't normally happen but just in case) -->
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-hourglass-half text-warning mb-3" style="font-size: 4rem;"></i>
+                            <h3>Waiting to Process</h3>
+                            <p class="text-muted">Your document is in the queue for processing.</p>
+                            
+                            <div class="mt-4">
+                                <button class="btn btn-primary" onClick="window.location.reload();">
+                                    <i class="fas fa-sync me-2"></i> Refresh Status
+                                </button>
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{% if document.status == 'processing' %}
+<script>
+    // Auto-refresh the page every 5 seconds while processing
+    setTimeout(function() {
+        window.location.reload();
+    }, 5000);
+</script>
+{% endif %}
+{% endblock %}

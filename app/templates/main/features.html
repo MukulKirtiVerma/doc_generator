@@ -1,0 +1,389 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Features - DocGen{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Header Section -->
+    <div class="row mb-5">
+        <div class="col-lg-8 mx-auto text-center">
+            <h1 class="display-4">Features & Capabilities</h1>
+            <p class="lead">Discover how DocGen transforms your document workflow with AI-powered conversion technology.</p>
+        </div>
+    </div>
+
+    <!-- Main Features Section -->
+    <div class="row mb-5">
+        <div class="col-lg-4 mb-4">
+            <div class="card h-100 shadow">
+                <div class="card-body text-center p-4">
+                    <i class="fas fa-magic fa-3x text-primary mb-3"></i>
+                    <h3>Smart OCR Technology</h3>
+                    <p>Our AI-powered OCR accurately extracts text from images while preserving the original layout and formatting.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4 mb-4">
+            <div class="card h-100 shadow">
+                <div class="card-body text-center p-4">
+                    <i class="fas fa-file-alt fa-3x text-primary mb-3"></i>
+                    <h3>Multiple Output Formats</h3>
+                    <p>Convert your images to Word documents (.docx), PDFs, or Excel spreadsheets (.xlsx) with perfect formatting.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4 mb-4">
+            <div class="card h-100 shadow">
+                <div class="card-body text-center p-4">
+                    <i class="fas fa-table fa-3x text-primary mb-3"></i>
+                    <h3>Table Recognition</h3>
+                    <p>Automatically detects tables in your documents and maintains their structure in the converted output.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Format-specific Features -->
+    <div class="row mb-5">
+        <div class="col-12 mb-4 text-center">
+            <h2 class="display-5">Format-Specific Features</h2>
+        </div>
+
+        <!-- Word Format Features -->
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 border-primary">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0"><i class="far fa-file-word me-2"></i> Word Documents (.docx)</h4>
+                </div>
+                <div class="card-body">
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item"><i class="fas fa-check text-success me-2"></i> Preserves headings and styles</li>
+                        <li class="list-group-item"><i class="fas fa-check text-success me-2"></i> Maintains paragraph formatting</li>
+                        <li class="list-group-item"><i class="fas fa-check text-success me-2"></i> Converts lists with correct numbering</li>
+                        <li class="list-group-item"><i class="fas fa-check text-success me-2"></i> Table of contents generation</li>
+                        <li class="list-group-item"><i class="fas fa-check text-success me-2"></i> Fully editable output</li>
+                    </ul>
+                </div>
+                <div class="card-footer bg-light">
+                    <p class="mb-0"><strong>Best for:</strong> Text-heavy documents, reports, letters, and contracts</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- PDF Format Features -->
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 border-danger">
+                <div class="card-header bg-danger text-white">
+                    <h4 class="mb-0"><i class="far fa-file-pdf me-2"></i> PDF Documents</h4>
+                </div>
+                <div class="card-body">
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item"><i class="fas fa-check text-success me-2"></i> Exact layout preservation</li>
+                        <li class="list-group-item"><i class="fas fa-check text-success me-2"></i> Maintains text and image positioning</li>
+                        <li class="list-group-item"><i class="fas fa-check text-success me-2"></i> Optimized for printing</li>
+                        <li class="list-group-item"><i class="fas fa-check text-success me-2"></i> Searchable text within PDF</li>
+                        <li class="list-group-item"><i class="fas fa-check text-success me-2"></i> Professional appearance</li>
+                    </ul>
+                </div>
+                <div class="card-footer bg-light">
+                    <p class="mb-0"><strong>Best for:</strong> Forms, brochures, and documents needing exact layout preservation</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Excel Format Features -->
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 border-success">
+                <div class="card-header bg-success text-white">
+                    <h4 class="mb-0"><i class="far fa-file-excel me-2"></i> Excel Spreadsheets (.xlsx)</h4>
+                </div>
+                <div class="card-body">
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item"><i class="fas fa-check text-success me-2"></i> Converts tables to spreadsheet format</li>
+                        <li class="list-group-item"><i class="fas fa-check text-success me-2"></i> Maintains cell data types</li>
+                        <li class="list-group-item"><i class="fas fa-check text-success me-2"></i> Preserves basic formulas where detected</li>
+                        <li class="list-group-item"><i class="fas fa-check text-success me-2"></i> Column and row alignment</li>
+                        <li class="list-group-item"><i class="fas fa-check text-success me-2"></i> Data-ready for analysis</li>
+                    </ul>
+                </div>
+                <div class="card-footer bg-light">
+                    <p class="mb-0"><strong>Best for:</strong> Tables, financial data, statistical information, and data analysis</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Advanced Features Section -->
+    <div class="row mb-5 py-5 bg-light rounded">
+        <div class="col-12 text-center mb-4">
+            <h2 class="display-5">Advanced Features</h2>
+            <p class="lead">Powered by Anthropic's Claude AI model</p>
+        </div>
+
+        <div class="col-md-6 mb-4">
+            <div class="d-flex">
+                <div class="flex-shrink-0">
+                    <i class="fas fa-brain fa-2x text-primary mt-1"></i>
+                </div>
+                <div class="flex-grow-1 ms-3">
+                    <h4>Intelligent Layout Analysis</h4>
+                    <p>Our AI doesn't just extract text—it understands the document structure and recreates it faithfully in the output format.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 mb-4">
+            <div class="d-flex">
+                <div class="flex-shrink-0">
+                    <i class="fas fa-language fa-2x text-primary mt-1"></i>
+                </div>
+                <div class="flex-grow-1 ms-3">
+                    <h4>Multi-language Support</h4>
+                    <p>Process documents in dozens of languages with accurate text recognition and preservation of language-specific formatting.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 mb-4">
+            <div class="d-flex">
+                <div class="flex-shrink-0">
+                    <i class="fas fa-table fa-2x text-primary mt-1"></i>
+                </div>
+                <div class="flex-grow-1 ms-3">
+                    <h4>Complex Table Processing</h4>
+                    <p>Handles merged cells, row/column spans, and nested tables with superior accuracy compared to traditional OCR tools.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 mb-4">
+            <div class="d-flex">
+                <div class="flex-shrink-0">
+                    <i class="fas fa-images fa-2x text-primary mt-1"></i>
+                </div>
+                <div class="flex-grow-1 ms-3">
+                    <h4>High-Volume Image Processing</h4>
+                    <p>Support for high-resolution images up to 250MB, ensuring even the most detailed documents are processed accurately.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Use Cases Section -->
+    <div class="row mb-5">
+        <div class="col-12 text-center mb-4">
+            <h2 class="display-5">Common Use Cases</h2>
+        </div>
+
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 shadow">
+                <img src="{{ url_for('static', filename='images/usecase-business.jpg') }}" class="card-img-top" alt="Business Use Case">
+                <div class="card-body">
+                    <h4 class="card-title">Business & Finance</h4>
+                    <ul class="list-unstyled">
+                        <li><i class="fas fa-check-circle text-success me-2"></i> Convert printed financial statements</li>
+                        <li><i class="fas fa-check-circle text-success me-2"></i> Digitize invoices and receipts</li>
+                        <li><i class="fas fa-check-circle text-success me-2"></i> Transform paper contracts into editable documents</li>
+                        <li><i class="fas fa-check-circle text-success me-2"></i> Process legacy business reports</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 shadow">
+                <img src="{{ url_for('static', filename='images/usecase-education.jpg') }}" class="card-img-top" alt="Education Use Case">
+                <div class="card-body">
+                    <h4 class="card-title">Education & Research</h4>
+                    <ul class="list-unstyled">
+                        <li><i class="fas fa-check-circle text-success me-2"></i> Convert handouts and worksheets</li>
+                        <li><i class="fas fa-check-circle text-success me-2"></i> Digitize research papers and journals</li>
+                        <li><i class="fas fa-check-circle text-success me-2"></i> Transform scanned books into searchable formats</li>
+                        <li><i class="fas fa-check-circle text-success me-2"></i> Process data tables from academic sources</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 shadow">
+                <img src="{{ url_for('static', filename='images/usecase-personal.jpg') }}" class="card-img-top" alt="Personal Use Case">
+                <div class="card-body">
+                    <h4 class="card-title">Personal & Creative</h4>
+                    <ul class="list-unstyled">
+                        <li><i class="fas fa-check-circle text-success me-2"></i> Convert handwritten notes to typed documents</li>
+                        <li><i class="fas fa-check-circle text-success me-2"></i> Digitize family recipes and documents</li>
+                        <li><i class="fas fa-check-circle text-success me-2"></i> Transform printed articles into digital format</li>
+                        <li><i class="fas fa-check-circle text-success me-2"></i> Process meeting notes and agendas</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Comparison Table -->
+    <div class="row mb-5">
+        <div class="col-12 text-center mb-4">
+            <h2 class="display-5">How We Compare</h2>
+        </div>
+
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-hover">
+                            <thead class="table-primary">
+                                <tr>
+                                    <th>Feature</th>
+                                    <th class="text-center">DocGen</th>
+                                    <th class="text-center">Traditional OCR</th>
+                                    <th class="text-center">Manual Retyping</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Text Accuracy</td>
+                                    <td class="text-center text-success">High (AI-powered)</td>
+                                    <td class="text-center">Medium</td>
+                                    <td class="text-center">Variable (human error)</td>
+                                </tr>
+                                <tr>
+                                    <td>Layout Preservation</td>
+                                    <td class="text-center text-success">Excellent</td>
+                                    <td class="text-center">Basic</td>
+                                    <td class="text-center">Time-consuming</td>
+                                </tr>
+                                <tr>
+                                    <td>Table Recognition</td>
+                                    <td class="text-center text-success">Advanced</td>
+                                    <td class="text-center">Limited</td>
+                                    <td class="text-center">Manual reconstruction</td>
+                                </tr>
+                                <tr>
+                                    <td>Processing Time</td>
+                                    <td class="text-center text-success">Seconds</td>
+                                    <td class="text-center">Minutes</td>
+                                    <td class="text-center">Hours</td>
+                                </tr>
+                                <tr>
+                                    <td>Multiple Output Formats</td>
+                                    <td class="text-center text-success">Yes (DOCX, PDF, XLSX)</td>
+                                    <td class="text-center">Limited</td>
+                                    <td class="text-center">Requires separate tools</td>
+                                </tr>
+                                <tr>
+                                    <td>Cost</td>
+                                    <td class="text-center text-success">Free tier available</td>
+                                    <td class="text-center">Often expensive</td>
+                                    <td class="text-center">Time is money</td>
+                                </tr>
+                                <tr>
+                                    <td>Cloud-based Solution</td>
+                                    <td class="text-center text-success">Yes</td>
+                                    <td class="text-center">Not always</td>
+                                    <td class="text-center">N/A</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Testimonials Section -->
+    <div class="row mb-5 py-5 bg-light rounded">
+        <div class="col-12 text-center mb-4">
+            <h2 class="display-5">What Our Users Say</h2>
+        </div>
+
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <div class="mb-3">
+                        <i class="fas fa-star text-warning"></i>
+                        <i class="fas fa-star text-warning"></i>
+                        <i class="fas fa-star text-warning"></i>
+                        <i class="fas fa-star text-warning"></i>
+                        <i class="fas fa-star text-warning"></i>
+                    </div>
+                    <p class="card-text">"DocGen has saved our accounting department countless hours. We used to manually input data from scanned invoices, but now we just upload the images and get perfectly formatted Excel sheets in seconds."</p>
+                </div>
+                <div class="card-footer bg-transparent">
+                    <div class="d-flex align-items-center">
+                        <img src="{{ url_for('static', filename='images/testimonial-1.jpg') }}" class="rounded-circle me-3" alt="User" width="50">
+                        <div>
+                            <h5 class="mb-0">Sarah Johnson</h5>
+                            <small class="text-muted">Financial Controller, XYZ Corp</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <div class="mb-3">
+                        <i class="fas fa-star text-warning"></i>
+                        <i class="fas fa-star text-warning"></i>
+                        <i class="fas fa-star text-warning"></i>
+                        <i class="fas fa-star text-warning"></i>
+                        <i class="fas fa-star text-warning"></i>
+                    </div>
+                    <p class="card-text">"As a researcher, I deal with a lot of printed papers and documents. DocGen helps me digitize them quickly while maintaining all the tables, formulas, and formatting. The searchable PDFs are a game-changer!"</p>
+                </div>
+                <div class="card-footer bg-transparent">
+                    <div class="d-flex align-items-center">
+                        <img src="{{ url_for('static', filename='images/testimonial-2.jpg') }}" class="rounded-circle me-3" alt="User" width="50">
+                        <div>
+                            <h5 class="mb-0">Dr. Michael Chen</h5>
+                            <small class="text-muted">Professor, University Research</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <div class="mb-3">
+                        <i class="fas fa-star text-warning"></i>
+                        <i class="fas fa-star text-warning"></i>
+                        <i class="fas fa-star text-warning"></i>
+                        <i class="fas fa-star text-warning"></i>
+                        <i class="fas fa-star-half-alt text-warning"></i>
+                    </div>
+                    <p class="card-text">"I needed to digitize hundreds of handwritten recipes from my grandmother. DocGen converted them beautifully into Word documents that I could easily edit and format into a family cookbook. Worth every penny!"</p>
+                </div>
+                <div class="card-footer bg-transparent">
+                    <div class="d-flex align-items-center">
+                        <img src="{{ url_for('static', filename='images/testimonial-3.jpg') }}" class="rounded-circle me-3" alt="User" width="50">
+                        <div>
+                            <h5 class="mb-0">Amanda Rodriguez</h5>
+                            <small class="text-muted">Small Business Owner</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CTA Section -->
+    <div class="row mt-5 text-center">
+        <div class="col-lg-8 mx-auto">
+            <div class="card bg-primary text-white p-5">
+                <h2 class="display-5 mb-3">Ready to Try DocGen?</h2>
+                <p class="lead mb-4">Start with 5 free conversions. No credit card required.</p>
+                <div>
+                    <a href="{{ url_for('auth.signup') }}" class="btn btn-light btn-lg px-5 py-3">Get Started Free</a>
+                    <p class="mt-3 mb-0">Already have an account? <a href="{{ url_for('auth.login') }}" class="text-white text-decoration-underline">Log in</a></p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

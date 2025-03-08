@@ -1,0 +1,139 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}DocGen - Convert Images to Documents{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Hero Section -->
+    <div class="row align-items-center py-5">
+        <div class="col-lg-6">
+            <h1 class="display-4 fw-bold">Transform Images into Professional Documents</h1>
+            <p class="lead">
+                DocGen uses advanced AI to convert images of text into perfectly formatted Word, Excel, and PDF documents while preserving the original layout.
+            </p>
+            <div class="d-flex gap-3 mb-4">
+                {% if current_user.is_authenticated %}
+                    <a href="{{ url_for('main.upload') }}" class="btn btn-primary btn-lg px-4">Upload Document</a>
+                {% else %}
+                    <a href="{{ url_for('auth.signup') }}" class="btn btn-primary btn-lg px-4">Get Started</a>
+                    <a href="{{ url_for('auth.login') }}" class="btn btn-outline-secondary btn-lg px-4">Login</a>
+                {% endif %}
+            </div>
+            <div class="text-muted">
+                <p><i class="fas fa-check text-success me-2"></i> Preserves original formatting</p>
+                <p><i class="fas fa-check text-success me-2"></i> Supports Word, Excel and PDF outputs</p>
+                <p><i class="fas fa-check text-success me-2"></i> Free for up to 5 conversions</p>
+            </div>
+        </div>
+        <div class="col-lg-6">
+            <img src="{{ url_for('static', filename='images/hero-image.png') }}" alt="DocGen Example" class="img-fluid rounded shadow">
+        </div>
+    </div>
+
+    <!-- How It Works Section -->
+    <div class="row my-5 py-5">
+        <div class="col-12 text-center mb-4">
+            <h2 class="display-5">How It Works</h2>
+            <p class="lead">Three simple steps to convert your images to formatted documents</p>
+        </div>
+
+        <div class="col-md-4 text-center mb-4">
+            <div class="p-4 h-100 border rounded shadow-sm">
+                <i class="fas fa-upload fa-3x text-primary mb-3"></i>
+                <h3>1. Upload Image</h3>
+                <p>Upload any image containing text (JPG, PNG, etc.) up to 250MB.</p>
+            </div>
+        </div>
+        <div class="col-md-4 text-center mb-4">
+            <div class="p-4 h-100 border rounded shadow-sm">
+                <i class="fas fa-magic fa-3x text-primary mb-3"></i>
+                <h3>2. Choose Format</h3>
+                <p>Select your desired output format: Word (.docx), Excel (.xlsx), or PDF.</p>
+            </div>
+        </div>
+        <div class="col-md-4 text-center mb-4">
+            <div class="p-4 h-100 border rounded shadow-sm">
+                <i class="fas fa-download fa-3x text-primary mb-3"></i>
+                <h3>3. Download Result</h3>
+                <p>Our AI processes your image and delivers a perfectly formatted document.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Features Highlight -->
+    <div class="row my-5 py-5 bg-light rounded">
+        <div class="col-12 text-center mb-4">
+            <h2 class="display-5">Powered by Advanced AI</h2>
+            <p class="lead">Using the latest Anthropic Claude technology for accurate text extraction</p>
+        </div>
+
+        <div class="col-md-6 mb-4">
+            <div class="h-100 d-flex">
+                <div class="me-3">
+                    <i class="fas fa-robot fa-2x text-primary"></i>
+                </div>
+                <div>
+                    <h4>Advanced OCR Technology</h4>
+                    <p>Our solution uses Anthropic's Claude AI to extract text with superior accuracy, even from complex layouts or low-quality images.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 mb-4">
+            <div class="h-100 d-flex">
+                <div class="me-3">
+                    <i class="fas fa-table fa-2x text-primary"></i>
+                </div>
+                <div>
+                    <h4>Preserves Tables & Formatting</h4>
+                    <p>Unlike basic OCR solutions, we maintain the original layout, including tables, columns, and formatting elements.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 mb-4">
+            <div class="h-100 d-flex">
+                <div class="me-3">
+                    <i class="fas fa-shield-alt fa-2x text-primary"></i>
+                </div>
+                <div>
+                    <h4>Secure Processing</h4>
+                    <p>Your documents are processed securely and never stored longer than necessary to complete your conversions.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 mb-4">
+            <div class="h-100 d-flex">
+                <div class="me-3">
+                    <i class="fas fa-tachometer-alt fa-2x text-primary"></i>
+                </div>
+                <div>
+                    <h4>Fast Turnaround</h4>
+                    <p>Get your formatted documents in seconds, not minutes, thanks to our optimized AI processing pipeline.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pricing CTA -->
+    <div class="row my-5 py-5 text-center">
+        <div class="col-lg-8 mx-auto">
+            <h2 class="display-5">Ready to Get Started?</h2>
+            <p class="lead mb-4">Try DocGen for free with 5 document conversions, then upgrade to a plan that fits your needs.</p>
+            <a href="{{ url_for('payment.plans') }}" class="btn btn-primary btn-lg px-5">View Pricing</a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block styles %}
+<style>
+    .fa-3x {
+        font-size: 3rem;
+    }
+    .fa-2x {
+        font-size: 2rem;
+    }
+</style>
+{% endblock %}

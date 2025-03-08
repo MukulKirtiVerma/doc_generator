@@ -1,0 +1,301 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Pricing Plans - DocGen{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-5 text-center">
+        <div class="col-lg-8 mx-auto">
+            <h1 class="display-4">Simple, Transparent Pricing</h1>
+            <p class="lead">Choose the plan that's right for you</p>
+        </div>
+    </div>
+    
+    <!-- Billing toggle -->
+    <div class="row justify-content-center mb-5">
+        <div class="col-lg-6">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-center align-items-center">
+                        <span class="h5 mb-0 me-3">Monthly</span>
+                        <div class="form-check form-switch mx-3">
+                            <input class="form-check-input" type="checkbox" id="billingToggle" style="width: 3em; height: 1.5em;">
+                            <label class="form-check-label" for="billingToggle"></label>
+                        </div>
+                        <span class="h5 mb-0 ms-3">Annual <span class="badge bg-success">Save 16%</span></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row justify-content-center">
+        <!-- Free Plan -->
+        <div class="col-md-3 mb-4">
+            <div class="card h-100 border-light">
+                <div class="card-header bg-light text-center py-3">
+                    <h4 class="my-0 fw-normal">{{ free_plan.title }}</h4>
+                </div>
+                <div class="card-body d-flex flex-column">
+                    <div class="text-center">
+                        <h1 class="card-title pricing-card-title">{{ currency }}0<small class="text-muted fw-light">/month</small></h1>
+                        <p class="text-muted">{{ free_plan.description }}</p>
+                    </div>
+                    <ul class="list-unstyled mt-3 mb-4">
+                        {% for feature in free_plan.get_features() %}
+                            <li class="mb-2"><i class="fas fa-check text-success me-2"></i> {{ feature }}</li>
+                        {% endfor %}
+                    </ul>
+                    <div class="mt-auto text-center">
+                        {% if not current_user.is_authenticated %}
+                            <a href="{{ url_for('auth.signup') }}" class="btn btn-outline-primary w-100">Sign Up Free</a>
+                        {% elif current_user.is_paid_user %}
+                            <button class="btn btn-outline-secondary w-100" disabled>Free Plan</button>
+                        {% else %}
+                            <button class="btn btn-outline-secondary w-100" disabled>Current Plan</button>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Monthly Plans -->
+        <div id="monthly-plans">
+            {% for plan in monthly_plans %}
+            <div class="col-md-3 mb-4 plan-card">
+                <div class="card h-100 border-primary">
+                    <div class="card-header bg-primary text-white text-center py-3">
+                        <h4 class="my-0 fw-normal">{{ plan.title }}</h4>
+                    </div>
+                    <div class="card-body d-flex flex-column">
+                        <div class="text-center">
+                            <h1 class="card-title pricing-card-title">
+                                {% if is_india %}
+                                    ₹{{ plan.price_inr }}<small class="text-muted fw-light">/month</small>
+                                {% else %}
+                                    ${{ plan.price_usd }}<small class="text-muted fw-light">/month</small>
+                                {% endif %}
+                            </h1>
+                            <p class="text-muted">{{ plan.description }}</p>
+                        </div>
+                        <ul class="list-unstyled mt-3 mb-4">
+                            {% for feature in plan.get_features() %}
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i> {{ feature }}</li>
+                            {% endfor %}
+                        </ul>
+                        <div class="mt-auto text-center">
+                            {% if not current_user.is_authenticated %}
+                                <a href="{{ url_for('auth.signup') }}" class="btn btn-primary w-100">Sign Up Now</a>
+                            {% elif current_user.is_paid_user and current_user.subscription_type == plan.name %}
+                                <a href="{{ url_for('payment.manage_subscription') }}" class="btn btn-outline-primary w-100">Manage Subscription</a>
+                            {% else %}
+                                <a href="{{ url_for('payment.checkout', plan_type=plan.name) }}" class="btn btn-primary w-100">
+                                    Subscribe Now
+                                </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Annual Plans -->
+        <div id="annual-plans" style="display: none;">
+            {% for plan in annual_plans %}
+            <div class="col-md-3 mb-4 plan-card">
+                <div class="card h-100 border-primary">
+                    <div class="card-header bg-primary text-white text-center py-3">
+                        <h4 class="my-0 fw-normal">{{ plan.title }}</h4>
+                        <span class="badge bg-warning text-dark">Save 16%</span>
+                    </div>
+                    <div class="card-body d-flex flex-column">
+                        <div class="text-center">
+                            <h1 class="card-title pricing-card-title">
+                                {% if is_india %}
+                                    ₹{{ plan.price_inr }}<small class="text-muted fw-light">/year</small>
+                                {% else %}
+                                    ${{ plan.price_usd }}<small class="text-muted fw-light">/year</small>
+                                {% endif %}
+                            </h1>
+                            <p class="text-muted">{{ plan.description }}</p>
+                        </div>
+                        <ul class="list-unstyled mt-3 mb-4">
+                            {% for feature in plan.get_features() %}
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i> {{ feature }}</li>
+                            {% endfor %}
+                        </ul>
+                        <div class="mt-auto text-center">
+                            {% if not current_user.is_authenticated %}
+                                <a href="{{ url_for('auth.signup') }}" class="btn btn-primary w-100">Sign Up Now</a>
+                            {% elif current_user.is_paid_user and current_user.subscription_type == plan.name %}
+                                <a href="{{ url_for('payment.manage_subscription') }}" class="btn btn-outline-primary w-100">Manage Subscription</a>
+                            {% else %}
+                                <a href="{{ url_for('payment.checkout', plan_type=plan.name) }}" class="btn btn-primary w-100">
+                                    Subscribe Now
+                                </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Payment Method Section -->
+    <div class="row mt-5 mb-5">
+        <div class="col-lg-8 mx-auto">
+            <div class="card shadow">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Secure Payment Methods</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-6 text-center text-md-start mb-3 mb-md-0">
+                            <h5 class="mb-3">We accept</h5>
+                            <div class="d-flex flex-wrap gap-3">
+                                {% if payment_gateway == 'stripe' %}
+                                    <img src="https://cdn.jsdelivr.net/npm/payment-icons@1.0.0/min/flat/visa.svg" alt="Visa" height="40">
+                                    <img src="https://cdn.jsdelivr.net/npm/payment-icons@1.0.0/min/flat/mastercard.svg" alt="Mastercard" height="40">
+                                    <img src="https://cdn.jsdelivr.net/npm/payment-icons@1.0.0/min/flat/amex.svg" alt="American Express" height="40">
+                                    <img src="https://cdn.jsdelivr.net/npm/payment-icons@1.0.0/min/flat/discover.svg" alt="Discover" height="40">
+                                {% else %}
+                                    <img src="https://cdn.jsdelivr.net/npm/payment-icons@1.0.0/min/flat/visa.svg" alt="Visa" height="40">
+                                    <img src="https://cdn.jsdelivr.net/npm/payment-icons@1.0.0/min/flat/mastercard.svg" alt="Mastercard" height="40">
+                                    <img src="https://cdn.jsdelivr.net/npm/payment-icons@1.0.0/min/flat/upi.svg" alt="UPI" height="40">
+                                    <img src="https://cdn.jsdelivr.net/npm/payment-icons@1.0.0/min/flat/paytm.svg" alt="Paytm" height="40">
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6 text-center text-md-end">
+                            <div class="d-flex align-items-center justify-content-center justify-content-md-end">
+                                <i class="fas fa-lock text-success fa-2x me-3"></i>
+                                <div>
+                                    <h5 class="mb-1">Secure Transactions</h5>
+                                    <p class="mb-0 text-muted">Your payment information is encrypted</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- FAQ Section -->
+    <div class="row mt-5">
+        <div class="col-12">
+            <h2 class="text-center mb-4">Frequently Asked Questions</h2>
+
+            <div class="accordion" id="pricingFAQ">
+                <div class="accordion-item">
+                    <h2 class="accordion-header" id="headingOne">
+                        <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne">
+                            What happens when I reach my document limit?
+                        </button>
+                    </h2>
+                    <div id="collapseOne" class="accordion-collapse collapse show" aria-labelledby="headingOne" data-bs-parent="#pricingFAQ">
+                        <div class="accordion-body">
+                            Free users have a total limit of {{ free_plan.document_limit }} document conversions. Paid plans have monthly limits that reset every 30 days. If you reach your limit, you can upgrade to a higher tier or wait until the next billing cycle.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="accordion-item">
+                    <h2 class="accordion-header" id="headingTwo">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo">
+                            How do payments work?
+                        </button>
+                    </h2>
+                    <div id="collapseTwo" class="accordion-collapse collapse" aria-labelledby="headingTwo" data-bs-parent="#pricingFAQ">
+                        <div class="accordion-body">
+                            {% if payment_gateway == 'stripe' %}
+                                We use Stripe for secure payment processing. Your subscription will automatically renew at the end of each billing period unless you cancel.
+                            {% else %}
+                                We use Razorpay for secure payment processing in India. Your subscription is valid for the duration of your plan and will need to be manually renewed before it expires.
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="accordion-item">
+                    <h2 class="accordion-header" id="headingThree">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseThree">
+                            What payment methods do you accept?
+                        </button>
+                    </h2>
+                    <div id="collapseThree" class="accordion-collapse collapse" aria-labelledby="headingThree" data-bs-parent="#pricingFAQ">
+                        <div class="accordion-body">
+                            {% if payment_gateway == 'stripe' %}
+                                We accept all major credit cards including Visa, Mastercard, American Express, and Discover through our secure payment processor, Stripe.
+                            {% else %}
+                                We accept a wide range of payment methods in India including UPI, credit/debit cards, net banking, and wallets through our secure payment processor, Razorpay.
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="accordion-item">
+                    <h2 class="accordion-header" id="headingFour">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFour">
+                            Do you offer refunds?
+                        </button>
+                    </h2>
+                    <div id="collapseFour" class="accordion-collapse collapse" aria-labelledby="headingFour" data-bs-parent="#pricingFAQ">
+                        <div class="accordion-body">
+                            We offer a 30-day money-back guarantee if you're not satisfied with our service. Contact our support team for assistance with refunds.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="accordion-item">
+                    <h2 class="accordion-header" id="headingFive">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFive">
+                            What are the file size limits?
+                        </button>
+                    </h2>
+                    <div id="collapseFive" class="accordion-collapse collapse" aria-labelledby="headingFive" data-bs-parent="#pricingFAQ">
+                        <div class="accordion-body">
+                            Free plan users can upload files up to 5MB. Basic plan users can upload files up to 25MB. Professional plan users can upload files up to 100MB. Enterprise plan users can upload files up to 250MB.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CTA Section -->
+    <div class="row mt-5 text-center">
+        <div class="col-lg-8 mx-auto">
+            <div class="card bg-light p-4">
+                <h3>Still have questions?</h3>
+                <p class="lead">Our team is here to help you find the perfect plan for your needs.</p>
+                <div>
+                    <a href="{{ url_for('main.contact') }}" class="btn btn-primary px-4 py-2">Contact Us</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Toggle between monthly and annual billing
+    document.getElementById('billingToggle').addEventListener('change', function() {
+        const monthlyPlans = document.getElementById('monthly-plans');
+        const annualPlans = document.getElementById('annual-plans');
+
+        if (this.checked) {
+            // Show annual plans
+            monthlyPlans.style.display = 'none';
+            annualPlans.style.display = 'flex';
+        } else {
+            // Show monthly plans
+            monthlyPlans.style.display = 'flex';
+            annualPlans.style.display = 'none';
+        }
+    });
+</script>
+{% endblock %}
