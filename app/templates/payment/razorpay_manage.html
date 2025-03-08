@@ -31,13 +31,30 @@
                                 <span class="h5 mb-0">Monthly Premium Plan</span>
                             {% elif current_user.subscription_type == 'yearly' %}
                                 <span class="h5 mb-0">Yearly Premium Plan</span>
+                            {% elif current_user.subscription_type == 'enterprise' %}
+                                <span class="h5 mb-0">Enterprise Plan</span>
                             {% else %}
                                 <span class="h5 mb-0">Premium Plan</span>
                             {% endif %}
                         </div>
-                        
+
+                        <!-- New detailed subscription information -->
+                        <div class="card bg-light mb-3">
+                            <div class="card-body">
+                                <h5 class="card-title">Subscription Details</h5>
+                                <p>Your current subscription: <strong>{{ subscription_type|capitalize if subscription_type else current_user.subscription_type|capitalize }}</strong></p>
+                                <p>Valid until: <strong>{{ subscription_end_date.strftime('%B %d, %Y') if subscription_end_date else current_user.subscription_end_date.strftime('%B %d, %Y') }}</strong></p>
+
+                                {% if current_user.subscription_type == 'monthly' %}
+                                    <p>Documents remaining this month: <strong>{{ current_user.documents_limit - current_user.monthly_conversion_count }}</strong> of {{ current_user.documents_limit }}</p>
+                                {% elif current_user.subscription_type == 'yearly' %}
+                                    <p>Documents remaining this year: <strong>{{ current_user.documents_limit - current_user.monthly_conversion_count }}</strong> of {{ current_user.documents_limit }}</p>
+                                {% endif %}
+                            </div>
+                        </div>
+
                         <p class="mb-3">Your subscription will automatically expire on {{ current_user.subscription_end_date.strftime('%B %d, %Y') }}. You'll need to renew manually before it expires to maintain access to premium features.</p>
-                        
+
                         <div class="alert alert-info">
                             <div class="d-flex">
                                 <div class="me-3">
@@ -49,26 +66,41 @@
                                 </div>
                             </div>
                         </div>
-                        
+
                         <div class="mt-4">
-                            <form action="{{ url_for('payment.cancel_subscription') }}" method="post" onsubmit="return confirm('Are you sure you want to cancel your subscription? You will still have access until the end of your billing period.');">
-                                <button type="submit" class="btn btn-outline-danger">
-                                    <i class="fas fa-times-circle me-2"></i> Cancel Subscription
-                                </button>
-                            </form>
+                            {% if current_user.subscription_type != 'enterprise' %}
+                                <div class="d-flex gap-2">
+                                    <form action="{{ url_for('payment.cancel_subscription') }}" method="post" onsubmit="return confirm('Are you sure you want to cancel your subscription? You will still have access until the end of your billing period.');">
+                                        <button type="submit" class="btn btn-outline-danger">
+                                            <i class="fas fa-times-circle me-2"></i> Cancel Subscription
+                                        </button>
+                                    </form>
+
+                                    {% if current_user.subscription_type == 'monthly' %}
+                                        <a href="{{ url_for('payment.checkout', plan_type='yearly') }}" class="btn btn-primary">
+                                            <i class="fas fa-arrow-up me-2"></i> Upgrade to Yearly
+                                        </a>
+                                    {% endif %}
+                                </div>
+                            {% else %}
+                                <p>For changes to your Enterprise plan, please contact our sales team.</p>
+                                <a href="{{ url_for('main.contact') }}" class="btn btn-primary">
+                                    <i class="fas fa-headset me-2"></i> Contact Sales Team
+                                </a>
+                            {% endif %}
                         </div>
                     {% elif current_user.subscription_status == 'cancelled' or current_user.subscription_status == 'expired' %}
                         <div class="d-flex align-items-center mb-3">
                             <span class="badge bg-warning text-dark me-2 p-2">{{ current_user.subscription_status | capitalize }}</span>
                             <span class="h5 mb-0">Your subscription has {{ current_user.subscription_status }}</span>
                         </div>
-                        
+
                         {% if current_user.subscription_end_date and current_user.subscription_end_date > now %}
                             <p class="mb-3">You will continue to have access to premium features until {{ current_user.subscription_end_date.strftime('%B %d, %Y') }}.</p>
                         {% else %}
                             <p class="mb-3">Your premium access has ended.</p>
                         {% endif %}
-                        
+
                         <div class="mt-4">
                             <a href="{{ url_for('payment.plans') }}" class="btn btn-primary">
                                 <i class="fas fa-sync me-2"></i> Renew Subscription
@@ -84,7 +116,7 @@
                     {% endif %}
                 </div>
             </div>
-            
+
             <!-- Payment History -->
             <div class="card shadow mb-4">
                 <div class="card-header bg-light">
@@ -92,7 +124,7 @@
                 </div>
                 <div class="card-body">
                     {% set payments = current_user.payment_history|selectattr('payment_method', 'equalto', 'razorpay')|list %}
-                    
+
                     {% if payments %}
                         <div class="table-responsive">
                             <table class="table table-hover">
@@ -128,7 +160,7 @@
                 </div>
             </div>
         </div>
-        
+
         <div class="col-lg-4">
             <!-- Subscription Benefits -->
             <div class="card shadow mb-4">
@@ -137,18 +169,43 @@
                 </div>
                 <div class="card-body">
                     <ul class="list-group list-group-flush">
-                        <li class="list-group-item">
-                            <i class="fas fa-check-circle text-success me-2"></i> Unlimited document conversions
-                        </li>
-                        <li class="list-group-item">
-                            <i class="fas fa-check-circle text-success me-2"></i> Premium OCR quality
-                        </li>
-                        <li class="list-group-item">
-                            <i class="fas fa-check-circle text-success me-2"></i> Custom Anthropic API key
-                        </li>
-                        <li class="list-group-item">
-                            <i class="fas fa-check-circle text-success me-2"></i> Priority support
-                        </li>
+                        {% if current_user.subscription_type == 'monthly' or current_user.subscription_type == 'yearly' %}
+                            <li class="list-group-item">
+                                <i class="fas fa-check-circle text-success me-2"></i> Premium OCR quality
+                            </li>
+                            <li class="list-group-item">
+                                <i class="fas fa-check-circle text-success me-2"></i> Google Vision + Claude AI
+                            </li>
+                            <li class="list-group-item">
+                                <i class="fas fa-check-circle text-success me-2"></i> Max file size: 100 MB
+                            </li>
+                            <li class="list-group-item">
+                                <i class="fas fa-check-circle text-success me-2"></i> Priority support
+                            </li>
+                        {% elif current_user.subscription_type == 'enterprise' %}
+                            <li class="list-group-item">
+                                <i class="fas fa-check-circle text-success me-2"></i> Unlimited documents
+                            </li>
+                            <li class="list-group-item">
+                                <i class="fas fa-check-circle text-success me-2"></i> Enterprise-grade OCR
+                            </li>
+                            <li class="list-group-item">
+                                <i class="fas fa-check-circle text-success me-2"></i> Max file size: 250 MB
+                            </li>
+                            <li class="list-group-item">
+                                <i class="fas fa-check-circle text-success me-2"></i> 24/7 dedicated support
+                            </li>
+                            <li class="list-group-item">
+                                <i class="fas fa-check-circle text-success me-2"></i> API access
+                            </li>
+                        {% else %}
+                            <li class="list-group-item">
+                                <i class="fas fa-check-circle text-success me-2"></i> Premium OCR quality
+                            </li>
+                            <li class="list-group-item">
+                                <i class="fas fa-check-circle text-success me-2"></i> Priority support
+                            </li>
+                        {% endif %}
                     </ul>
                 </div>
             </div>

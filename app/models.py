@@ -2,6 +2,8 @@ from datetime import datetime, timedelta
 
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
+
+import app
 from app import db, login_manager
 import json
 
@@ -34,6 +36,12 @@ class User(db.Model, UserMixin):
     monthly_usage = db.Column(db.Integer, default=0)  # Current month usage
     usage_reset_date = db.Column(db.DateTime, nullable=True)  # Date to reset monthly usage
     documents_limit = db.Column(db.Integer, default=5)  # Current document limit
+    # Add to User model
+    daily_conversion_count = db.Column(db.Integer, default=0)
+    last_daily_reset = db.Column(db.DateTime, nullable=True)
+    monthly_conversion_count = db.Column(db.Integer, default=0)
+    # Add to User model class definition
+    last_used = db.Column(db.DateTime, nullable=True)
 
     # Timestamps
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
@@ -61,54 +69,92 @@ class User(db.Model, UserMixin):
 
     def can_process_document(self):
         """
-        Check if user can process a document based on their subscription
+        Check if user can process a document based on their subscription and limits
 
         Returns:
             tuple: (can_process, message)
         """
-        # Current time for checks
+        # Get current time for checks
         now = datetime.utcnow()
 
-        # Check if subscription needs to be reset
+
+        # Reset daily count if needed for all users
+        today = now.date()
+        if self.last_daily_reset is None or self.last_daily_reset.date() < today:
+            self.daily_conversion_count = 0
+            self.last_daily_reset = now
+            db.session.commit()
+
+        # Reset monthly count if needed for ALL users (including free)
         if self.usage_reset_date and self.usage_reset_date <= now:
-            self.monthly_usage = 0
+            self.monthly_conversion_count = 0
             self.usage_reset_date = now + timedelta(days=30)
             db.session.commit()
 
-        # Check paid status
+        # Get the user's plan
+        from app.models import Plan
+        if not self.is_paid_user:
+            plan = Plan.query.filter_by(name='free').first()
+        else:
+            plan = Plan.query.filter_by(name=self.subscription_type).first()
+
+        if not plan:
+            # Fallback to defaults if plan not found
+            document_limit = 5
+            daily_limit = 2
+        else:
+            document_limit = plan.document_limit
+            # Daily limit from plan or calculate based on monthly limit
+            daily_limit = getattr(plan, 'daily_limit', None) or (2 if plan.name == 'free' else
+                                                                 10 if plan.name == 'yearly' else 5)
+
+        # For free users, check monthly limit instead of lifetime
+        if not self.is_paid_user:
+            # Ensure free users have a reset date set
+            if not self.usage_reset_date:
+                self.usage_reset_date = now + timedelta(days=30)
+                db.session.commit()
+
+            if self.monthly_conversion_count >= document_limit:
+                days_until_reset = (self.usage_reset_date - now).days
+                return False, f"You've reached your monthly free limit of {document_limit} conversions. Limit resets in {days_until_reset} days."
+
+            if self.daily_conversion_count >= daily_limit:
+                return False, f"You've reached your daily conversion limit of {daily_limit}."
+
+            return True, None
+
+        # For paid users, check subscription validity
         if self.is_paid_user and self.subscription_status == 'active':
-            # For paid users, check if they have a valid subscription
             if self.subscription_end_date and self.subscription_end_date > now:
-                # Check monthly usage limit
-                if self.monthly_usage < self.documents_limit:
-                    return True, None
-                else:
-                    return False, f"You've reached your monthly limit of {self.documents_limit} documents. Please upgrade your plan or wait until next month."
+                # Check monthly usage
+                if self.monthly_conversion_count >= document_limit:
+                    return False, f"You've reached your monthly limit of {document_limit} conversions."
+
+                # Check daily usage
+                if self.daily_conversion_count >= daily_limit:
+                    return False, f"You've reached today's limit of {daily_limit} conversions."
+
+                return True, None
             else:
                 # Subscription expired, update status
                 self.subscription_status = 'expired'
                 self.is_paid_user = False
                 db.session.commit()
                 return False, "Your subscription has expired. Please renew to continue."
-        else:
-            # For free users, check lifetime limit
-            free_limit = 5  # Default free limit
 
-            # Get the correct limit from the free plan
-            free_plan = Plan.query.filter_by(name='free').first()
-            if free_plan:
-                free_limit = free_plan.document_limit
-
-            if self.usage_count < free_limit:
-                return True, None
-            else:
-                remaining = max(0, free_limit - self.usage_count)
-                return False, f"You've used all your {free_limit} free documents. Please upgrade to a paid plan to continue."
+        # Default fallback
+        return False, "Unknown subscription status. Please contact support."
 
     def increment_usage(self):
         """Increment usage counters"""
         self.usage_count += 1
-        self.monthly_usage += 1
+        # Choose one of these to keep, and remove the other line
+        # self.monthly_usage += 1  # Consider removing this
+        self.monthly_conversion_count += 1  # Keep this one
+        self.daily_conversion_count += 1
+
+        # Add this line to track the last activity timestamp
         self.last_used = datetime.utcnow()
 
         # Set reset date if not exists
@@ -157,6 +203,9 @@ class Plan(db.Model):
     price_usd = db.Column(db.Float, nullable=False)  # Price in USD for Stripe
     stripe_price_id = db.Column(db.String(100), nullable=True)  # Stripe price ID
 
+    # Add to Plan model
+    daily_limit = db.Column(db.Integer, default=2)  # Daily document limit
+
     # Indian pricing (INR)
     price_inr = db.Column(db.Float, nullable=False)  # Price in INR for Razorpay
 
@@ -180,7 +229,10 @@ class Plan(db.Model):
     def get_features(self):
         """Get features as a list"""
         if self.features:
-            return json.loads(self.features)
+            try:
+                return json.loads(self.features)
+            except (ValueError, TypeError):
+                return []
         return []
 
 class Payment(db.Model):

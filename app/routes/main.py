@@ -244,13 +244,11 @@ def process_document(document_id):
                     structured_data_obj = json.loads(document.structured_data)
                 except:
                     current_app.logger.warning(f"Failed to parse structured data for document {document.id}")
-
             success, error_message = generate_document(
                 ocr_text,
                 document.file_type,
                 output_path,
-                structured_data=structured_data_obj,
-                user_api_key=current_user.anthropic_api_key
+                # structured_data=structured_data_obj,
             )
 
             if success:

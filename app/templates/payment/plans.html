@@ -29,67 +29,93 @@
         </div>
     </div>
 
-    <div class="row justify-content-center">
-        <!-- Free Plan -->
-        <div class="col-md-3 mb-4">
-            <div class="card h-100 border-light">
-                <div class="card-header bg-light text-center py-3">
-                    <h4 class="my-0 fw-normal">{{ free_plan.title }}</h4>
-                </div>
-                <div class="card-body d-flex flex-column">
-                    <div class="text-center">
-                        <h1 class="card-title pricing-card-title">{{ currency }}0<small class="text-muted fw-light">/month</small></h1>
-                        <p class="text-muted">{{ free_plan.description }}</p>
+    <!-- Monthly Plans View -->
+    <div id="monthly-plans-container">
+        <div class="row justify-content-center">
+            <!-- Free Plan -->
+            <div class="col-md-3 mb-4">
+                <div class="card h-100 border-light">
+                    <div class="card-header bg-light text-center py-3">
+                        <h4 class="my-0 fw-normal">{{ free_plan.title }}</h4>
                     </div>
-                    <ul class="list-unstyled mt-3 mb-4">
-                        {% for feature in free_plan.get_features() %}
-                            <li class="mb-2"><i class="fas fa-check text-success me-2"></i> {{ feature }}</li>
-                        {% endfor %}
-                    </ul>
-                    <div class="mt-auto text-center">
-                        {% if not current_user.is_authenticated %}
-                            <a href="{{ url_for('auth.signup') }}" class="btn btn-outline-primary w-100">Sign Up Free</a>
-                        {% elif current_user.is_paid_user %}
-                            <button class="btn btn-outline-secondary w-100" disabled>Free Plan</button>
-                        {% else %}
-                            <button class="btn btn-outline-secondary w-100" disabled>Current Plan</button>
-                        {% endif %}
+                    <div class="card-body d-flex flex-column">
+                        <div class="text-center">
+                            <h1 class="card-title pricing-card-title">
+                                {% if is_india %}₹0{% else %}$0{% endif %}
+                                <small class="text-muted fw-light">/month</small>
+                            </h1>
+                            <p class="text-muted">{{ free_plan.description }}</p>
+                        </div>
+                        <ul class="list-unstyled mt-3 mb-4">
+                            {% if free_plan.get_features() %}
+                                {% for feature in free_plan.get_features() %}
+                                    <li class="mb-2"><i class="fas fa-check text-success me-2"></i> {{ feature }}</li>
+                                {% endfor %}
+                            {% else %}
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i> 5 documents per month</li>
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Claude AI processing</li>
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Max file size: 5 MB</li>
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Basic formatting</li>
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Standard support</li>
+                            {% endif %}
+                        </ul>
+                        <div class="mt-auto text-center">
+                            {% if not current_user.is_authenticated %}
+                                <a href="{{ url_for('auth.signup') }}" class="btn btn-outline-primary w-100">Sign Up Free</a>
+                            {% elif current_user.is_paid_user %}
+                                <button class="btn btn-outline-secondary w-100" disabled>Free Plan</button>
+                            {% else %}
+                                <button class="btn btn-outline-secondary w-100" disabled>Current Plan</button>
+                            {% endif %}
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
 
-        <!-- Monthly Plans -->
-        <div id="monthly-plans">
-            {% for plan in monthly_plans %}
-            <div class="col-md-3 mb-4 plan-card">
-                <div class="card h-100 border-primary">
+            <!-- Monthly Premium Plan -->
+            <div class="col-md-3 mb-4">
+                <div class="card h-100 border-primary shadow">
                     <div class="card-header bg-primary text-white text-center py-3">
-                        <h4 class="my-0 fw-normal">{{ plan.title }}</h4>
+                        <h4 class="my-0 fw-normal">{{ monthly_plan.title }}</h4>
                     </div>
                     <div class="card-body d-flex flex-column">
                         <div class="text-center">
                             <h1 class="card-title pricing-card-title">
                                 {% if is_india %}
-                                    ₹{{ plan.price_inr }}<small class="text-muted fw-light">/month</small>
+                                    ₹{{ monthly_plan.price_inr }}
                                 {% else %}
-                                    ${{ plan.price_usd }}<small class="text-muted fw-light">/month</small>
+                                    ${{ monthly_plan.price_usd }}
                                 {% endif %}
+                                <small class="text-muted fw-light">/month</small>
                             </h1>
-                            <p class="text-muted">{{ plan.description }}</p>
+                            <p class="text-muted">{{ monthly_plan.description }}</p>
                         </div>
                         <ul class="list-unstyled mt-3 mb-4">
-                            {% for feature in plan.get_features() %}
-                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i> {{ feature }}</li>
-                            {% endfor %}
+                            {% if monthly_plan.get_features() %}
+                                {% for feature in monthly_plan.get_features() %}
+                                    <li class="mb-2"><i class="fas fa-check text-success me-2"></i> {{ feature }}</li>
+                                {% endfor %}
+                            {% else %}
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i> 50 documents per month</li>
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Premium OCR quality</li>
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Max file size: 100 MB</li>
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Advanced formatting</li>
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Priority support</li>
+                            {% endif %}
                         </ul>
                         <div class="mt-auto text-center">
                             {% if not current_user.is_authenticated %}
                                 <a href="{{ url_for('auth.signup') }}" class="btn btn-primary w-100">Sign Up Now</a>
-                            {% elif current_user.is_paid_user and current_user.subscription_type == plan.name %}
-                                <a href="{{ url_for('payment.manage_subscription') }}" class="btn btn-outline-primary w-100">Manage Subscription</a>
+                            {% elif current_user.is_paid_user %}
+                                {% if current_user.subscription_type == 'monthly' %}
+                                    <a href="{{ url_for('payment.manage_subscription') }}" class="btn btn-outline-primary w-100">Manage Subscription</a>
+                                {% elif current_user.subscription_type == 'yearly' %}
+                                    <button class="btn btn-outline-secondary w-100" disabled>Already on Yearly Plan</button>
+                                {% elif current_user.subscription_type == 'enterprise' %}
+                                    <button class="btn btn-outline-secondary w-100" disabled>Enterprise Plan</button>
+                                {% endif %}
                             {% else %}
-                                <a href="{{ url_for('payment.checkout', plan_type=plan.name) }}" class="btn btn-primary w-100">
+                                <a href="{{ url_for('payment.checkout', plan_type='monthly') }}" class="btn btn-primary w-100">
                                     Subscribe Now
                                 </a>
                             {% endif %}
@@ -97,41 +123,139 @@
                     </div>
                 </div>
             </div>
-            {% endfor %}
-        </div>
 
-        <!-- Annual Plans -->
-        <div id="annual-plans" style="display: none;">
-            {% for plan in annual_plans %}
-            <div class="col-md-3 mb-4 plan-card">
-                <div class="card h-100 border-primary">
+            <!-- Enterprise Plan (always visible) -->
+            <div class="col-md-3 mb-4">
+                <div class="card h-100 border-dark shadow">
+                    <div class="card-header bg-dark text-white text-center py-3">
+                        <h4 class="my-0 fw-normal">{{ enterprise_plan.title }}</h4>
+                    </div>
+                    <div class="card-body d-flex flex-column">
+                        <div class="text-center">
+                            <h1 class="card-title pricing-card-title">
+                                Custom
+                                <small class="text-muted fw-light">pricing</small>
+                            </h1>
+                            <p class="text-muted">{{ enterprise_plan.description }}</p>
+                        </div>
+                        <ul class="list-unstyled mt-3 mb-4">
+                            {% if enterprise_plan.get_features() %}
+                                {% for feature in enterprise_plan.get_features() %}
+                                    <li class="mb-2"><i class="fas fa-check text-success me-2"></i> {{ feature }}</li>
+                                {% endfor %}
+                            {% else %}
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Unlimited documents</li>
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Enterprise OCR quality</li>
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Dedicated support</li>
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i> API access</li>
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Custom integration</li>
+                            {% endif %}
+                        </ul>
+                        <div class="mt-auto text-center">
+                            {% if current_user.is_authenticated and current_user.subscription_type == 'enterprise' %}
+                                <button class="btn btn-outline-secondary w-100" disabled>Current Plan</button>
+                            {% else %}
+                                <a href="{{ url_for('main.contact') }}" class="btn btn-dark w-100">
+                                    Contact Sales
+                                </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Annual Plans View -->
+    <div id="annual-plans-container" style="display: none;">
+        <div class="row justify-content-center">
+            <!-- Free Plan (copy in annual view too) -->
+            <div class="col-md-3 mb-4">
+                <div class="card h-100 border-light">
+                    <div class="card-header bg-light text-center py-3">
+                        <h4 class="my-0 fw-normal">{{ free_plan.title }}</h4>
+                    </div>
+                    <div class="card-body d-flex flex-column">
+                        <div class="text-center">
+                            <h1 class="card-title pricing-card-title">
+                                {% if is_india %}₹0{% else %}$0{% endif %}
+                                <small class="text-muted fw-light">/month</small>
+                            </h1>
+                            <p class="text-muted">{{ free_plan.description }}</p>
+                        </div>
+                        <ul class="list-unstyled mt-3 mb-4">
+                            {% if free_plan.get_features() %}
+                                {% for feature in free_plan.get_features() %}
+                                    <li class="mb-2"><i class="fas fa-check text-success me-2"></i> {{ feature }}</li>
+                                {% endfor %}
+                            {% else %}
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i> 5 documents per month</li>
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Claude AI processing</li>
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Max file size: 5 MB</li>
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Basic formatting</li>
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Standard support</li>
+                            {% endif %}
+                        </ul>
+                        <div class="mt-auto text-center">
+                            {% if not current_user.is_authenticated %}
+                                <a href="{{ url_for('auth.signup') }}" class="btn btn-outline-primary w-100">Sign Up Free</a>
+                            {% elif current_user.is_paid_user %}
+                                <button class="btn btn-outline-secondary w-100" disabled>Free Plan</button>
+                            {% else %}
+                                <button class="btn btn-outline-secondary w-100" disabled>Current Plan</button>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Yearly Premium Plan -->
+            <div class="col-md-3 mb-4">
+                <div class="card h-100 border-primary shadow">
                     <div class="card-header bg-primary text-white text-center py-3">
-                        <h4 class="my-0 fw-normal">{{ plan.title }}</h4>
+                        <h4 class="my-0 fw-normal">{{ yearly_plan.title }}</h4>
                         <span class="badge bg-warning text-dark">Save 16%</span>
                     </div>
                     <div class="card-body d-flex flex-column">
                         <div class="text-center">
                             <h1 class="card-title pricing-card-title">
                                 {% if is_india %}
-                                    ₹{{ plan.price_inr }}<small class="text-muted fw-light">/year</small>
+                                    ₹{{ yearly_plan.price_inr }}
                                 {% else %}
-                                    ${{ plan.price_usd }}<small class="text-muted fw-light">/year</small>
+                                    ${{ yearly_plan.price_usd }}
                                 {% endif %}
+                                <small class="text-muted fw-light">/year</small>
                             </h1>
-                            <p class="text-muted">{{ plan.description }}</p>
+                            <p class="text-muted">{{ yearly_plan.description }}</p>
                         </div>
                         <ul class="list-unstyled mt-3 mb-4">
-                            {% for feature in plan.get_features() %}
-                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i> {{ feature }}</li>
-                            {% endfor %}
+                            {% if yearly_plan.get_features() %}
+                                {% for feature in yearly_plan.get_features() %}
+                                    <li class="mb-2"><i class="fas fa-check text-success me-2"></i> {{ feature }}</li>
+                                {% endfor %}
+                            {% else %}
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i> 600 documents per year</li>
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Premium OCR quality</li>
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Max file size: 100 MB</li>
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Advanced formatting</li>
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Priority support</li>
+                            {% endif %}
                         </ul>
                         <div class="mt-auto text-center">
                             {% if not current_user.is_authenticated %}
                                 <a href="{{ url_for('auth.signup') }}" class="btn btn-primary w-100">Sign Up Now</a>
-                            {% elif current_user.is_paid_user and current_user.subscription_type == plan.name %}
-                                <a href="{{ url_for('payment.manage_subscription') }}" class="btn btn-outline-primary w-100">Manage Subscription</a>
+                            {% elif current_user.is_paid_user %}
+                                {% if current_user.subscription_type == 'yearly' %}
+                                    <a href="{{ url_for('payment.manage_subscription') }}" class="btn btn-outline-primary w-100">Manage Subscription</a>
+                                {% elif current_user.subscription_type == 'monthly' %}
+                                    <a href="{{ url_for('payment.checkout', plan_type='yearly') }}" class="btn btn-primary w-100">
+                                        Upgrade to Yearly
+                                    </a>
+                                {% elif current_user.subscription_type == 'enterprise' %}
+                                    <button class="btn btn-outline-secondary w-100" disabled>Enterprise Plan</button>
+                                {% endif %}
                             {% else %}
-                                <a href="{{ url_for('payment.checkout', plan_type=plan.name) }}" class="btn btn-primary w-100">
+                                <a href="{{ url_for('payment.checkout', plan_type='yearly') }}" class="btn btn-primary w-100">
                                     Subscribe Now
                                 </a>
                             {% endif %}
@@ -139,7 +263,46 @@
                     </div>
                 </div>
             </div>
-            {% endfor %}
+
+            <!-- Enterprise Plan (always visible) -->
+            <div class="col-md-3 mb-4">
+                <div class="card h-100 border-dark shadow">
+                    <div class="card-header bg-dark text-white text-center py-3">
+                        <h4 class="my-0 fw-normal">{{ enterprise_plan.title }}</h4>
+                    </div>
+                    <div class="card-body d-flex flex-column">
+                        <div class="text-center">
+                            <h1 class="card-title pricing-card-title">
+                                Custom
+                                <small class="text-muted fw-light">pricing</small>
+                            </h1>
+                            <p class="text-muted">{{ enterprise_plan.description }}</p>
+                        </div>
+                        <ul class="list-unstyled mt-3 mb-4">
+                            {% if enterprise_plan.get_features() %}
+                                {% for feature in enterprise_plan.get_features() %}
+                                    <li class="mb-2"><i class="fas fa-check text-success me-2"></i> {{ feature }}</li>
+                                {% endfor %}
+                            {% else %}
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Unlimited documents</li>
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Enterprise OCR quality</li>
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Dedicated support</li>
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i> API access</li>
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Custom integration</li>
+                            {% endif %}
+                        </ul>
+                        <div class="mt-auto text-center">
+                            {% if current_user.is_authenticated and current_user.subscription_type == 'enterprise' %}
+                                <button class="btn btn-outline-secondary w-100" disabled>Current Plan</button>
+                            {% else %}
+                                <a href="{{ url_for('main.contact') }}" class="btn btn-dark w-100">
+                                    Contact Sales
+                                </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -197,7 +360,7 @@
                     </h2>
                     <div id="collapseOne" class="accordion-collapse collapse show" aria-labelledby="headingOne" data-bs-parent="#pricingFAQ">
                         <div class="accordion-body">
-                            Free users have a total limit of {{ free_plan.document_limit }} document conversions. Paid plans have monthly limits that reset every 30 days. If you reach your limit, you can upgrade to a higher tier or wait until the next billing cycle.
+                            Free users have a monthly limit of {{ free_plan.document_limit if free_plan else 5 }} document conversions that reset each month. Premium monthly plan users get {{ monthly_plan.document_limit if monthly_plan else 50 }} documents per month, while yearly subscribers receive {{ yearly_plan.document_limit if yearly_plan else 600 }} documents per year (50 per month).
                         </div>
                     </div>
                 </div>
@@ -239,12 +402,12 @@
                 <div class="accordion-item">
                     <h2 class="accordion-header" id="headingFour">
                         <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFour">
-                            Do you offer refunds?
+                            What's the difference between the free and premium plans?
                         </button>
                     </h2>
                     <div id="collapseFour" class="accordion-collapse collapse" aria-labelledby="headingFour" data-bs-parent="#pricingFAQ">
                         <div class="accordion-body">
-                            We offer a 30-day money-back guarantee if you're not satisfied with our service. Contact our support team for assistance with refunds.
+                            The free plan uses Claude AI for processing and is limited to 5 conversions per month with a maximum file size of 5MB. Premium plans add Google Vision OCR for enhanced accuracy, support files up to 100MB, include priority support, and provide up to 50 documents per month. Premium also offers better preservation of complex layouts and tables.
                         </div>
                     </div>
                 </div>
@@ -252,12 +415,25 @@
                 <div class="accordion-item">
                     <h2 class="accordion-header" id="headingFive">
                         <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFive">
-                            What are the file size limits?
+                            When should I consider the Enterprise plan?
                         </button>
                     </h2>
                     <div id="collapseFive" class="accordion-collapse collapse" aria-labelledby="headingFive" data-bs-parent="#pricingFAQ">
                         <div class="accordion-body">
-                            Free plan users can upload files up to 5MB. Basic plan users can upload files up to 25MB. Professional plan users can upload files up to 100MB. Enterprise plan users can upload files up to 250MB.
+                            The Enterprise plan is ideal for organizations with high-volume document processing needs, those requiring API access for custom integrations, or teams needing multi-user access. It offers unlimited documents, larger file size limits (250MB), and dedicated support. Contact our sales team for a customized quote based on your specific needs.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="accordion-item">
+                    <h2 class="accordion-header" id="headingSix">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSix">
+                            Do you offer refunds?
+                        </button>
+                    </h2>
+                    <div id="collapseSix" class="accordion-collapse collapse" aria-labelledby="headingSix" data-bs-parent="#pricingFAQ">
+                        <div class="accordion-body">
+                            We offer a 30-day money-back guarantee if you're not satisfied with our service. Contact our support team for assistance with refunds.
                         </div>
                     </div>
                 </div>
@@ -284,17 +460,17 @@
 <script>
     // Toggle between monthly and annual billing
     document.getElementById('billingToggle').addEventListener('change', function() {
-        const monthlyPlans = document.getElementById('monthly-plans');
-        const annualPlans = document.getElementById('annual-plans');
+        const monthlyPlansContainer = document.getElementById('monthly-plans-container');
+        const annualPlansContainer = document.getElementById('annual-plans-container');
 
         if (this.checked) {
             // Show annual plans
-            monthlyPlans.style.display = 'none';
-            annualPlans.style.display = 'flex';
+            monthlyPlansContainer.style.display = 'none';
+            annualPlansContainer.style.display = 'block';
         } else {
             // Show monthly plans
-            monthlyPlans.style.display = 'flex';
-            annualPlans.style.display = 'none';
+            monthlyPlansContainer.style.display = 'block';
+            annualPlansContainer.style.display = 'none';
         }
     });
 </script>

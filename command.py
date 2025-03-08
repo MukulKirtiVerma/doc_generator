@@ -3,6 +3,8 @@ from datetime import datetime
 from app import db
 from app.models import User
 
+
+#run on flask shell
 # Find the user
 user = User.query.filter_by(email='mukulkirtiverma@gmail.com').first()
 

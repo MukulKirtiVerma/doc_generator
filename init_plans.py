@@ -1,55 +1,68 @@
 """
-This script initializes the default plans in the database.
-Run it after creating the database tables.
+This script initializes revised plans for the DocGen application.
+It creates a free plan, two premium plans (monthly and yearly), and an enterprise plan.
+The plans are tailored for both international and Indian users.
 """
 
 from app import create_app, db
 from app.models import Plan
 import json
 
-def init_plans():
-    """Initialize default plans"""
+def initialize_revised_plans():
+    """Initialize revised plans"""
     app = create_app()
     with app.app_context():
         # Check if plans already exist
-        if Plan.query.count() > 0:
-            print("Plans already exist. Skipping initialization.")
-            return
+        existing_plans = Plan.query.all()
+        if existing_plans:
+            print("Deleting existing plans...")
+            for plan in existing_plans:
+                db.session.delete(plan)
+            db.session.commit()
+            print("Existing plans deleted.")
 
         # Define features for each plan
         free_features = [
-            "5 document conversions (total)",
+            "5 document conversions per month",
+            "Claude AI processing",
             "Max file size: 5 MB",
-            "Basic OCR quality",
+            "Basic formatting preservation",
             "Standard support"
         ]
 
-        basic_features = [
-            "50 document conversions per month",
-            "Max file size: 25 MB",
-            "Standard OCR quality",
-            "Standard support (24-48 hour response)"
+        premium_features = [
+            "50 documents per month",
+            "Premium Quality OCR",
+            "Max file size: 100 MB",
+            "Advanced formatting preservation",
+            "Priority support",
+            "Complex layout extraction"
         ]
 
-        professional_features = [
-            "150 document conversions per month",
+        yearly_premium_features = [
+            "600 documents per year (50 per month)",
+            "Premium Quality OCR",
             "Max file size: 100 MB",
-            "Premium OCR quality",
-            "Priority support (24-hour response)",
-            "Custom Anthropic API key option"
+            "Advanced formatting preservation",
+            "Priority support",
+            "Complex layout extraction"
         ]
 
         enterprise_features = [
-            "400 document conversions per month",
+            "Unlimited documents",
+            "Enterprise-grade OCR",
             "Max file size: 250 MB",
-            "Highest OCR quality",
-            "Premium support (12-hour response)",
-            "Custom API keys for all services",
-            "Detailed analytics dashboard"
+            "Perfect formatting preservation",
+            "24/7 dedicated support",
+            "API access",
+            "Custom integration",
+            "Multi-user access",
+            "Advanced analytics"
         ]
 
-        # Create default plans
+        # Create plans
         plans = [
+            # Free plan
             Plan(
                 name='free',
                 title='Free Plan',
@@ -57,88 +70,58 @@ def init_plans():
                 price_usd=0.00,
                 price_inr=0.00,
                 document_limit=5,
+                daily_limit=2,  # 2 documents per day
                 max_file_size=5 * 1024 * 1024,  # 5 MB
                 duration_months=0,  # Unlimited duration
                 stripe_price_id='',
                 features=json.dumps(free_features),
                 is_active=True
             ),
+
+            # Monthly premium plan
             Plan(
-                name='basic',
-                title='Basic Plan',
-                description='Individual users and small businesses',
-                price_usd=29.99,
-                price_inr=1499.00,
+                name='monthly',
+                title='Premium Monthly',
+                description='50 documents per month with premium features',
+                price_usd=29.00,
+                price_inr=2465.00,
                 document_limit=50,
-                max_file_size=25 * 1024 * 1024,  # 25 MB
-                duration_months=1,
-                stripe_price_id='price_basic_monthly',
-                features=json.dumps(basic_features),
-                is_active=True
-            ),
-            Plan(
-                name='professional',
-                title='Professional Plan',
-                description='Businesses with regular processing needs',
-                price_usd=79.99,
-                price_inr=3999.00,
-                document_limit=150,
+                daily_limit=5,  # 5 documents per day
                 max_file_size=100 * 1024 * 1024,  # 100 MB
                 duration_months=1,
-                stripe_price_id='price_professional_monthly',
-                features=json.dumps(professional_features),
+                stripe_price_id='price_monthly_premium',
+                features=json.dumps(premium_features),
                 is_active=True
             ),
+
+            # Yearly premium plan (with discount)
+            Plan(
+                name='yearly',
+                title='Premium Yearly',
+                description='Premium features with annual billing (save 16%)',
+                price_usd=319.00,
+                price_inr=27115.00,
+                document_limit=600,  # 50 per month × 12 months
+                daily_limit=10,  # 10 documents per day
+                max_file_size=100 * 1024 * 1024,  # 100 MB
+                duration_months=12,
+                stripe_price_id='price_yearly_premium',
+                features=json.dumps(yearly_premium_features),
+                is_active=True
+            ),
+
+            # Enterprise plan
             Plan(
                 name='enterprise',
                 title='Enterprise Plan',
-                description='Organizations with high-volume processing',
-                price_usd=199.99,
-                price_inr=8999.00,
-                document_limit=400,
-                max_file_size=250 * 1024 * 1024,  # 250 MB
-                duration_months=1,
-                stripe_price_id='price_enterprise_monthly',
-                features=json.dumps(enterprise_features),
-                is_active=True
-            ),
-            # Annual plans with discount
-            Plan(
-                name='basic_annual',
-                title='Basic Annual Plan',
-                description='Individual users and small businesses (Save 16%)',
-                price_usd=299.90,
-                price_inr=14990.00,
-                document_limit=50,
-                max_file_size=25 * 1024 * 1024,  # 25 MB
-                duration_months=12,
-                stripe_price_id='price_basic_annual',
-                features=json.dumps(basic_features),
-                is_active=True
-            ),
-            Plan(
-                name='professional_annual',
-                title='Professional Annual Plan',
-                description='Businesses with regular processing needs (Save 16%)',
-                price_usd=799.90,
-                price_inr=39990.00,
-                document_limit=150,
-                max_file_size=100 * 1024 * 1024,  # 100 MB
-                duration_months=12,
-                stripe_price_id='price_professional_annual',
-                features=json.dumps(professional_features),
-                is_active=True
-            ),
-            Plan(
-                name='enterprise_annual',
-                title='Enterprise Annual Plan',
-                description='Organizations with high-volume processing (Save 16%)',
-                price_usd=1999.90,
-                price_inr=89990.00,
-                document_limit=400,
+                description='Custom solution for large organizations',
+                price_usd=0.00,  # Contact sales for pricing
+                price_inr=0.00,  # Contact sales for pricing
+                document_limit=9999999,  # Effectively unlimited
+                daily_limit=999,  # Effectively unlimited daily
                 max_file_size=250 * 1024 * 1024,  # 250 MB
                 duration_months=12,
-                stripe_price_id='price_enterprise_annual',
+                stripe_price_id='',
                 features=json.dumps(enterprise_features),
                 is_active=True
             )
@@ -147,61 +130,11 @@ def init_plans():
         # Add plans to database
         for plan in plans:
             db.session.add(plan)
+            print(f"Added plan: {plan.name}")
 
         # Commit changes
         db.session.commit()
-        print("Plans initialized successfully!")
+        print("All plans have been initialized successfully!")
 
 if __name__ == '__main__':
-    init_plans()
-"""
-This script initializes the default plans in the database.
-Run it after creating the database tables.
-"""
-
-from app import create_app, db
-from app.models import Plan
-
-def init_plans():
-    """Initialize default plans"""
-    app = create_app()
-    with app.app_context():
-        # Check if plans already exist
-        if Plan.query.count() > 0:
-            print("Plans already exist. Skipping initialization.")
-            return
-
-        # Create default plans
-        plans = [
-            Plan(
-                name='monthly',
-                title='Monthly Plan',
-                description='Premium features with monthly billing',
-                price_stripe=20.00,  # USD
-                price_razorpay=1499.00,  # INR
-                stripe_price_id='price_monthly_id_here',
-                duration_months=1,
-                is_active=True
-            ),
-            Plan(
-                name='yearly',
-                title='Yearly Plan',
-                description='Premium features with yearly billing (save 16%)',
-                price_stripe=200.00,  # USD
-                price_razorpay=14990.00,  # INR
-                stripe_price_id='price_yearly_id_here',
-                duration_months=12,
-                is_active=True
-            )
-        ]
-
-        # Add plans to database
-        for plan in plans:
-            db.session.add(plan)
-
-        # Commit changes
-        db.session.commit()
-        print("Plans initialized successfully!")
-
-if __name__ == '__main__':
-    init_plans()
+    initialize_revised_plans()

@@ -24,6 +24,7 @@ def generate_document(ocr_text, output_format, output_path, user_api_key=None):
     """
     # Use user's API key if provided, otherwise use the application default
     api_key = user_api_key if user_api_key else current_app.config['ANTHROPIC_API_KEY']
+    print(api_key)
 
     # Create a client
     client = anthropic.Anthropic(api_key=api_key)

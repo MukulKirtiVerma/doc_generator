@@ -5,7 +5,8 @@ from google.cloud import vision
 from flask import current_app
 import uuid
 import logging
-
+from google.cloud import vision_v1
+from google.api_core.client_options import ClientOptions
 
 def detect_text_with_vision(image_path, language_hint='en'):
     """
@@ -23,11 +24,15 @@ def detect_text_with_vision(image_path, language_hint='en'):
     try:
         # Get API key
         vision_key = current_app.config.get('GOOGLE_VISION_KEY')
+        print(vision_key)
         if not vision_key:
             raise ValueError("Google Vision API key not configured")
 
         # Create a client using the API key
-        client = vision.ImageAnnotatorClient.from_service_account_info({"key": vision_key})
+
+
+        client_options = ClientOptions(api_key=vision_key)
+        client = vision_v1.ImageAnnotatorClient(client_options=client_options)
 
         # Read the image file
         with io.open(image_path, 'rb') as image_file:
@@ -58,8 +63,9 @@ def detect_text_with_vision(image_path, language_hint='en'):
             }
 
             for block in page.blocks:
+                from google.cloud.vision_v1.types.text_annotation import Block
                 block_info = {
-                    'type': 'text' if block.block_type == vision.TextAnnotation.BlockType.TEXT else 'table',
+                    'type': 'text' if block.block_type == Block.BlockType.TEXT else 'table',
                     'paragraphs': []
                 }
 

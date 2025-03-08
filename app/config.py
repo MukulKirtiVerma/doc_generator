@@ -36,7 +36,7 @@ class Config:
     FORCE_REGION = os.environ.get('FORCE_REGION', '')  # 'india' or empty
 
     # Payment Gateway Settings
-    PAYMENT_GATEWAY = os.environ.get('PAYMENT_GATEWAY', 'stripe')  # 'stripe' or 'razorpay'
+    PAYMENT_GATEWAY = os.environ.get('PAYMENT_GATEWAY', 'razorpay')  # 'stripe' or 'razorpay'
 
     # Stripe
     STRIPE_PUBLIC_KEY = os.environ.get('STRIPE_PUBLIC_KEY')
