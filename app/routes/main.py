@@ -1,3 +1,6 @@
+"""
+Main routes for the DocGen application.
+"""
 import json
 import os
 import uuid
@@ -11,8 +14,7 @@ import time
 
 from app import db
 from app.models import User, Document, ApiUsage
-from app.services.anthropic_service import process_image_with_anthropic
-from app.services.document_service import generate_document
+from app.services.document_service import generate_document_from_vision
 
 main_bp = Blueprint('main', __name__)
 
@@ -159,11 +161,6 @@ def upload():
             # Get language from the form
             language = request.form.get('language', 'en')
 
-            # Get OCR provider (only premium users can use Google Vision)
-            ocr_provider = 'anthropic'  # Default for free users
-            if current_user.is_paid_user:
-                ocr_provider = request.form.get('ocr_provider', 'anthropic')
-
             # Create document record
             document = Document(
                 user_id=current_user.id,
@@ -171,7 +168,7 @@ def upload():
                 stored_filename=unique_filename,
                 file_type=output_format,
                 language=language,
-                ocr_provider=ocr_provider,
+                ocr_provider='google_vision',  # All users use Google Vision now
                 file_size=file_size,
                 status='pending'
             )
@@ -229,7 +226,7 @@ def process_document(document_id):
 
             # Store structured data as JSON
             document.structured_data = json.dumps(structured_data)
-            document.anthropic_request_id = request_id
+            document.anthropic_request_id = request_id  # Kept for compatibility
 
             processing_time = time.time() - start_time
 
@@ -244,11 +241,13 @@ def process_document(document_id):
                     structured_data_obj = json.loads(document.structured_data)
                 except:
                     current_app.logger.warning(f"Failed to parse structured data for document {document.id}")
-            success, error_message = generate_document(
-                ocr_text,
+
+            # Use the new direct document generation function that doesn't require Anthropic
+            success, error_message = generate_document_from_vision(
+                structured_data_obj,
+                ocr_text,  # Also pass the OCR text as a fallback
                 document.file_type,
-                output_path,
-                # structured_data=structured_data_obj,
+                output_path
             )
 
             if success:
@@ -262,7 +261,7 @@ def process_document(document_id):
             api_usage = ApiUsage(
                 user_id=current_user.id,
                 document_id=document.id,
-                api_type='anthropic',
+                api_type='google_vision',  # Changed from 'anthropic'
                 processing_time=processing_time
             )
             db.session.add(api_usage)

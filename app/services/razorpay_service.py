@@ -93,17 +93,18 @@ def calculate_fees(amount, payment_method='card'):
 
     # GST on transaction fee (18%)
     gst_on_fee = transaction_fee * 0.18
+    gst = amount * .18
 
     # Total fee including GST
-    total_fee = transaction_fee + gst_on_fee
+    total_fee = transaction_fee + gst_on_fee + gst
 
     # Total amount to charge customer
     total_amount = amount + total_fee
 
     return {
         'base_amount': amount,
-        'transaction_fee': transaction_fee,
-        'gst': gst_on_fee,
+        'transaction_fee': transaction_fee + gst_on_fee,
+        'gst': gst,
         'total_fee': total_fee,
         'total_amount': total_amount
     }

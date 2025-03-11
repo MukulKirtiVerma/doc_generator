@@ -1,179 +1,233 @@
+"""
+Document Service - Generates formatted documents from Google Vision OCR data
+"""
 import os
-import subprocess
-
-import anthropic
 from flask import current_app
-import base64
 import json
 from datetime import datetime
-import uuid
 
 
-def generate_document(ocr_text, output_format, output_path, user_api_key=None):
+def generate_document_from_vision(structured_data, ocr_text, output_format, output_path):
     """
-    Generate a document in the specified format using Anthropic's Claude
+    Generate a document using only Google Vision API data
 
     Args:
-        ocr_text (str): The OCR text extracted from the image
+        structured_data (dict): Structured data from Google Vision API
+        ocr_text (str): Raw OCR text as fallback if structured data is incomplete
         output_format (str): The desired output format ('docx', 'pdf', 'xlsx')
         output_path (str): The path where the output document should be saved
-        user_api_key (str, optional): User's Anthropic API key, if provided
 
     Returns:
         tuple: (success, error_message)
     """
-    # Use user's API key if provided, otherwise use the application default
-    api_key = user_api_key if user_api_key else current_app.config['ANTHROPIC_API_KEY']
-    print(api_key)
-
-    # Create a client
-    client = anthropic.Anthropic(api_key=api_key)
-
     try:
-        # Prepare the prompt based on the output format
         if output_format == 'docx':
-            system_prompt = """You are a document formatting assistant. Your task is to take OCR text and generate
-            a well-formatted Word document (.docx) representation of the content. You should preserve the layout,
-            formatting, tables, and any hierarchical structure from the original document."""
-
-            user_prompt = f"""Here is OCR text extracted from an image. Create a Python script that generates
-            a Word document (.docx) that matches the layout and formatting of this content as closely as possible.
-            Use the python-docx library.
-
-            OCR TEXT:
-            ```
-            {ocr_text}
-            ```
-
-            Return ONLY valid Python code that I can run directly to generate the Word document. Include all necessary
-            imports and ensure the script saves the document to 'output.docx'. Don't include any explanations or comments
-            outside the code block."""
-
+            return generate_word_document(structured_data, ocr_text, output_path)
         elif output_format == 'pdf':
-            system_prompt = """You are a document formatting assistant. Your task is to take OCR text and generate
-            a well-formatted PDF document representation of the content. You should preserve the layout,
-            formatting, tables, and any hierarchical structure from the original document."""
-
-            user_prompt = f"""Here is OCR text extracted from an image. Create a Python script that generates
-            a PDF document that matches the layout and formatting of this content as closely as possible.
-            Use the reportlab library.
-
-            OCR TEXT:
-            ```
-            {ocr_text}
-            ```
-
-            Return ONLY valid Python code that I can run directly to generate the PDF. Include all necessary
-            imports and ensure the script saves the document to 'output.pdf'. Don't include any explanations or comments
-            outside the code block."""
-
+            return generate_pdf_document(structured_data, ocr_text, output_path)
         elif output_format == 'xlsx':
-            system_prompt = """You are a data formatting assistant. Your task is to take OCR text, especially
-            tabular data, and generate a well-formatted Excel spreadsheet (.xlsx) representation. You should 
-            preserve the layout, cell formatting, and structure from the original document."""
-
-            user_prompt = f"""Here is OCR text extracted from an image that contains tabular data. Create a Python script
-            that generates an Excel spreadsheet (.xlsx) that matches the layout and formatting of this content as closely
-            as possible. Use the openpyxl library.
-
-            OCR TEXT:
-            ```
-            {ocr_text}
-            ```
-
-            Return ONLY valid Python code that I can run directly to generate the Excel file. Include all necessary
-            imports and ensure the script saves the document to 'output.xlsx'. Don't include any explanations or comments
-            outside the code block."""
-
+            return generate_excel_document(structured_data, ocr_text, output_path)
         else:
             return False, f"Unsupported output format: {output_format}"
-
-        # Send the request to Anthropic
-        message = client.messages.create(
-            model="claude-3-opus-20240229",  # Use Claude 3 Opus for best results
-            max_tokens=4096,
-            system=system_prompt,
-            messages=[
-                {
-                    "role": "user",
-                    "content": user_prompt
-                }
-            ]
-        )
-
-        # Extract the Python code from the response
-        response_text = message.content[0].text
-
-        # Parse out the code block (assuming Claude returns valid code)
-        # If Claude returns the code in a markdown code block, extract just the code
-        if "```python" in response_text and "```" in response_text.split("```python", 1)[1]:
-            code = response_text.split("```python", 1)[1].split("```", 1)[0].strip()
-        elif "```" in response_text:
-            code = response_text.split("```", 2)[1].strip()
-            if code.startswith("python"):
-                code = code[6:].strip()
-        else:
-            code = response_text.strip()
-
-        # Create a temporary Python file in a directory that definitely exists
-        import tempfile
-        with tempfile.NamedTemporaryFile(suffix='.py', mode='w', delete=False, encoding='utf-8') as temp_file:
-            temp_py_file = temp_file.name
-
-            # Normalize the output path to avoid path issues
-            output_path_normalized = os.path.normpath(output_path)
-
-            # Modify the code to save to the correct output path
-            # Convert the path to a proper Python string literal
-            quoted_path = repr(output_path_normalized)  # This handles all escaping properly
-
-            if output_format == 'docx':
-                code = code.replace('"output.docx"', quoted_path)
-                code = code.replace("'output.docx'", quoted_path)
-                code = code.replace("output.docx", quoted_path)
-            elif output_format == 'pdf':
-                code = code.replace('"output.pdf"', quoted_path)
-                code = code.replace("'output.pdf'", quoted_path)
-                code = code.replace("output.pdf", quoted_path)
-            elif output_format == 'xlsx':
-                code = code.replace('"output.xlsx"', quoted_path)
-                code = code.replace("'output.xlsx'", quoted_path)
-                code = code.replace("output.xlsx", quoted_path)
-
-            # Write the code to the temporary file and log it for debugging
-            temp_file.write(code)
-            current_app.logger.debug(f"Generated Python code:\n{code}")
-
-        # Ensure the output directory exists
-        os.makedirs(os.path.dirname(output_path_normalized), exist_ok=True)
-
-        # Execute the Python code using the current Python interpreter
-        import sys
-        python_executable = sys.executable
-        current_app.logger.info(f"Using Python interpreter: {python_executable}")
-
-        try:
-            completed_process = subprocess.run(
-                [python_executable, temp_py_file],
-                check=True,
-                capture_output=True,
-                text=True
-            )
-            success = True
-            error_message = None
-        except subprocess.CalledProcessError as e:
-            success = False
-            error_message = f"Error executing Python script: {e.stderr}"
-            current_app.logger.error(f"Document generation error: {error_message}")
-        finally:
-            # Clean up the temporary file
-            if os.path.exists(temp_py_file):
-                os.remove(temp_py_file)
-
-        if success and os.path.exists(output_path_normalized):
-            return True, None
-        else:
-            return False, error_message or "Failed to generate document. The document generation script execution failed."
-
     except Exception as e:
         return False, f"Error generating document: {str(e)}"
+
+
+def generate_word_document(structured_data, ocr_text, output_path):
+    """Generate Word document from structured Vision API data"""
+    try:
+        from docx import Document
+        from docx.shared import Pt, Inches
+        from docx.enum.text import WD_ALIGN_PARAGRAPH
+
+        doc = Document()
+
+        # If structured data is missing or empty, use raw OCR text as fallback
+        if not structured_data or not structured_data.get('pages'):
+            paragraph = doc.add_paragraph(ocr_text)
+            doc.save(output_path)
+            return True, None
+
+        # Process each page
+        for page in structured_data.get('pages', []):
+            # Sort blocks by vertical position (top to bottom)
+            blocks = page.get('blocks', [])
+            if not blocks:
+                continue
+
+            # Sort blocks by vertical position for proper reading order
+            sorted_blocks = sorted(blocks, key=lambda b: min(v[1] for v in b.get('bounding_box', [(0, 0)])))
+
+            for block in sorted_blocks:
+                if block.get('type') == 'table':
+                    # Create a table in Word
+                    table_data = next((t for t in structured_data.get('tables', [])
+                                       if t.get('page') == structured_data.get('pages').index(page) and
+                                       t.get('block') == blocks.index(block)), None)
+
+                    if table_data and table_data.get('rows'):
+                        rows = table_data.get('rows', [])
+                        if rows:
+                            # Determine the max columns in any row
+                            max_cols = max(len(row) for row in rows)
+                            table = doc.add_table(rows=len(rows), cols=max_cols)
+                            table.style = 'Table Grid'
+
+                            for i, row in enumerate(rows):
+                                for j, cell_text in enumerate(row):
+                                    if j < len(table.rows[i].cells):
+                                        table.rows[i].cells[j].text = cell_text
+
+                            # Add spacing after table
+                            doc.add_paragraph()
+                else:
+                    # Process text block
+                    for paragraph in block.get('paragraphs', []):
+                        p = doc.add_paragraph()
+
+                        # Get text
+                        text = paragraph.get('text', '')
+                        if not text.strip():
+                            continue
+
+                        # Detect if paragraph is a heading (simplified heuristic)
+                        if len(text) < 100 and (text.strip().endswith(':') or text.isupper() or
+                                                any(text.startswith(h) for h in ["Chapter ", "Section "])):
+                            p.style = 'Heading 2'
+                            p.add_run(text)
+                        else:
+                            # Add text with potential formatting
+                            for word in paragraph.get('words', []):
+                                word_text = word.get('text', '')
+                                run = p.add_run(word_text + ' ')
+
+                                # Apply basic formatting if detected
+                                # This is very simple detection based on common patterns
+                                if word_text.isupper() and len(word_text) > 1:
+                                    run.bold = True
+
+                                # Check for likely emphasis patterns
+                                if word_text.startswith('*') and word_text.endswith('*'):
+                                    run.italic = True
+
+                                # Check for likely underline patterns
+                                if word_text.startswith('_') and word_text.endswith('_'):
+                                    run.underline = True
+
+        # Save the document
+        doc.save(output_path)
+        return True, None
+
+    except ImportError:
+        # Handle missing python-docx library
+        return False, "python-docx library is required but not installed. Install it with: pip install python-docx"
+    except Exception as e:
+        return False, f"Error generating Word document: {str(e)}"
+
+
+# Update the generate_excel_document function to accept the ocr_text parameter
+def generate_excel_document(structured_data, ocr_text, output_path):
+    """Generate Excel document from structured Vision API data"""
+    try:
+        from openpyxl import Workbook
+
+        wb = Workbook()
+        ws = wb.active
+
+        # Find tables in the document
+        tables = structured_data.get('tables', [])
+
+        if tables:
+            # Use the first table for the main worksheet
+            main_table = tables[0]
+
+            for row_idx, row in enumerate(main_table.get('rows', []), 1):
+                for col_idx, cell_text in enumerate(row, 1):
+                    ws.cell(row=row_idx, column=col_idx, value=cell_text)
+
+            # Create additional worksheets for other tables
+            for table_idx, table in enumerate(tables[1:], 1):
+                ws_name = f"Table {table_idx + 1}"
+                ws = wb.create_sheet(title=ws_name)
+
+                for row_idx, row in enumerate(table.get('rows', []), 1):
+                    for col_idx, cell_text in enumerate(row, 1):
+                        ws.cell(row=row_idx, column=col_idx, value=cell_text)
+        else:
+            # No tables found, try to create a structured spreadsheet from blocks
+            row_idx = 1
+
+            # If structured data is missing or empty, use raw OCR text as fallback
+            if not structured_data or not structured_data.get('pages'):
+                ws.cell(row=row_idx, column=1, value=ocr_text)
+            else:
+                for page in structured_data.get('pages', []):
+                    for block in page.get('blocks', []):
+                        for paragraph in block.get('paragraphs', []):
+                            text = paragraph.get('text', '')
+                            if text.strip():
+                                ws.cell(row=row_idx, column=1, value=text)
+                                row_idx += 1
+
+        # Save the workbook
+        wb.save(output_path)
+        return True, None
+    except Exception as e:
+        return False, f"Error generating Excel document: {str(e)}"
+
+
+# Update the generate_pdf_document function to accept the ocr_text parameter
+def generate_pdf_document(structured_data, ocr_text, output_path):
+    """Generate PDF document from structured Vision API data"""
+    try:
+        from reportlab.lib.pagesizes import letter
+        from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table
+        from reportlab.lib.styles import getSampleStyleSheet
+
+        doc = SimpleDocTemplate(output_path, pagesize=letter)
+        styles = getSampleStyleSheet()
+        elements = []
+
+        # If structured data is missing or empty, use raw OCR text as fallback
+        if not structured_data or not structured_data.get('pages'):
+            elements.append(Paragraph(ocr_text, styles['Normal']))
+            doc.build(elements)
+            return True, None
+
+        # Process each page
+        for page in structured_data.get('pages', []):
+            # Sort blocks by vertical position
+            blocks = page.get('blocks', [])
+            blocks.sort(key=lambda b: min(v[1] for v in b.get('bounding_box', [(0, 0)])))
+
+            for block in blocks:
+                if block.get('type') == 'table':
+                    # Create a table in PDF
+                    table_data = next((t for t in structured_data.get('tables', [])
+                                       if t.get('page') == structured_data.get('pages').index(page) and
+                                       t.get('block') == blocks.index(block)),
+                                      None)
+
+                    if table_data and table_data.get('rows'):
+                        t = Table(table_data.get('rows'))
+                        elements.append(t)
+                        elements.append(Spacer(1, 12))
+                else:
+                    # Process text block
+                    for paragraph in block.get('paragraphs', []):
+                        text = paragraph.get('text', '')
+                        if text.strip():
+                            # Apply appropriate style
+                            if len(text) < 100 and text.strip().endswith(':'):
+                                p = Paragraph(text, styles['Heading2'])
+                            else:
+                                p = Paragraph(text, styles['Normal'])
+
+                            elements.append(p)
+                            elements.append(Spacer(1, 6))
+
+        # Build the PDF
+        doc.build(elements)
+        return True, None
+    except Exception as e:
+        return False, f"Error generating PDF document: {str(e)}"

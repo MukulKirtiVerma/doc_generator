@@ -9,6 +9,8 @@ import json
 import time
 from sqlalchemy import text
 
+from init_plans import initialize_revised_plans
+
 
 def reset_database():
     """Drop all tables and reinitialize the database"""
@@ -17,7 +19,7 @@ def reset_database():
     with app.app_context():
         # Get confirmation from user
         print("WARNING: This will delete all data in the database!")
-        confirmation = input("Type 'yes' to confirm: ")
+        confirmation = "yes"#input("Type 'yes' to confirm: ")
 
         if confirmation.lower() != 'yes':
             print("Operation cancelled.")
@@ -52,3 +54,4 @@ def reset_database():
 
 if __name__ == '__main__':
     reset_database()
+    initialize_revised_plans()

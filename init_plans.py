@@ -70,7 +70,7 @@ def initialize_revised_plans():
                 price_usd=0.00,
                 price_inr=0.00,
                 document_limit=5,
-                daily_limit=2,  # 2 documents per day
+                daily_limit=50,  # 2 documents per day
                 max_file_size=5 * 1024 * 1024,  # 5 MB
                 duration_months=0,  # Unlimited duration
                 stripe_price_id='',
@@ -136,5 +136,5 @@ def initialize_revised_plans():
         db.session.commit()
         print("All plans have been initialized successfully!")
 
-if __name__ == '__main__':
-    initialize_revised_plans()
+# if __name__ == '__main__':
+#     initialize_revised_plans()

@@ -29,7 +29,7 @@ class Config:
 
     # Regional settings
     DEFAULT_CURRENCY = os.environ.get('DEFAULT_CURRENCY', 'USD')  # USD or INR
-    DEFAULT_PAYMENT_GATEWAY = os.environ.get('DEFAULT_PAYMENT_GATEWAY', 'stripe')  # 'stripe' or 'razorpay'
+    DEFAULT_PAYMENT_GATEWAY = os.environ.get('DEFAULT_PAYMENT_GATEWAY', 'razorpay')  # 'stripe' or 'razorpay'
 
     # Region detection (can be overridden in .env)
     DETECT_REGION = os.environ.get('DETECT_REGION', 'True').lower() == 'true'
