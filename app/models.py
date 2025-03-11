@@ -101,12 +101,12 @@ class User(db.Model, UserMixin):
         if not plan:
             # Fallback to defaults if plan not found
             document_limit = 5
-            daily_limit = 2
+            daily_limit = 5
         else:
             document_limit = plan.document_limit
             # Daily limit from plan or calculate based on monthly limit
-            daily_limit = getattr(plan, 'daily_limit', None) or (2 if plan.name == 'free' else
-                                                                 10 if plan.name == 'yearly' else 5)
+            daily_limit = getattr(plan, 'daily_limit', None) or (5 if plan.name == 'free' else
+                                                                 50000 if plan.name == 'yearly' else 3000)
 
         # For free users, check monthly limit instead of lifetime
         if not self.is_paid_user:
