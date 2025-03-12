@@ -187,6 +187,12 @@ class Document(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
+    # Add these fields to the Document model class
+
+    # Inside the Document class:
+    batch_id = db.Column(db.String(36), db.ForeignKey('batch_processes.id'), nullable=True)
+    batch_order = db.Column(db.Integer, nullable=True)  # Order within a batch
+
     def __repr__(self):
         return f'<Document {self.original_filename}>'
 
@@ -283,3 +289,29 @@ class ApiUsage(db.Model):
 
     def __repr__(self):
         return f'<ApiUsage {self.id}>'
+
+
+
+class BatchProcess(db.Model):
+    """Model for tracking batches of documents processed together"""
+    __tablename__ = 'batch_processes'
+
+    id = db.Column(db.String(36), primary_key=True)  # UUID as string
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    total_documents = db.Column(db.Integer, default=0)
+    completed_documents = db.Column(db.Integer, default=0)
+    failed_documents = db.Column(db.Integer, default=0)
+    output_format = db.Column(db.String(10), nullable=False)  # docx, pdf, xlsx
+    status = db.Column(db.String(20), default='pending')  # pending, processing, completed
+    output_filename = db.Column(db.String(255), nullable=True)  # For combined output (zip file)
+    create_combined_output = db.Column(db.Boolean, default=True)  # Whether to create a combined output
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    documents = db.relationship('Document', backref='batch', lazy=True,
+                               primaryjoin="Document.batch_id == BatchProcess.id")
+    user = db.relationship('User', backref='batch_processes', lazy=True)
+
+    def __repr__(self):
+        return f'<BatchProcess {self.id}>'

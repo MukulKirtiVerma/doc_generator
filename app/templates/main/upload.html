@@ -1,6 +1,6 @@
 {% extends "layouts/base.html" %}
 
-{% block title %}Upload Image - DocGen{% endblock %}
+{% block title %}Upload Images - DocGen{% endblock %}
 
 {% block content %}
 <div class="container">
@@ -8,7 +8,7 @@
         <div class="col-md-8">
             <div class="card shadow">
                 <div class="card-header bg-primary text-white">
-                    <h4 class="mb-0">Upload Image for Conversion</h4>
+                    <h4 class="mb-0">Upload Images for Conversion</h4>
                 </div>
                 <div class="card-body">
                     <form method="post" enctype="multipart/form-data" id="uploadForm">
@@ -19,29 +19,56 @@
                             </div>
                         {% else %}
                             <div class="alert alert-info">
-                                <i class="fas fa-info-circle me-2"></i> Free plan: {{ remaining_attempts }} of {{ config['FREE_USER_ATTEMPTS'] }} conversions remaining.
+                                <i class="fas fa-info-circle me-2"></i> Free plan: <span id="remaining-conversions">{{ remaining_attempts }}</span> of {{ config['FREE_USER_ATTEMPTS'] }} conversions remaining.
                                 <a href="{{ url_for('payment.plans') }}" class="alert-link">Upgrade for unlimited access</a>.
                             </div>
                         {% endif %}
-                        
+
                         <!-- File upload -->
                         <div class="mb-4">
-                            <label for="image" class="form-label">Select Image (JPG, PNG, GIF, etc.)</label>
+                            <label for="images" class="form-label">Select Images (JPG, PNG, GIF, etc.)</label>
                             <div class="input-group">
-                                <input type="file" class="form-control" id="image" name="image" accept=".jpg,.jpeg,.png,.gif,.bmp,.tiff,.webp" required>
-                                <span class="input-group-text" id="file-size-display">0 MB</span>
+                                <input type="file" class="form-control" id="images" name="images" accept=".jpg,.jpeg,.png,.gif,.bmp,.tiff,.webp" required multiple>
+                                <span class="input-group-text" id="total-size-display">0 MB</span>
                             </div>
-                            <div class="form-text">Maximum file size: 250 MB</div>
+                            <div class="form-text">
+                                {% if current_user.is_paid_user %}
+                                    Maximum file size: 20 MB per image, max resolution: 6200×6200 pixels
+                                {% else %}
+                                    Maximum file size: 5 MB per image, max resolution: 1024×1024 pixels
+                                {% endif %}
+                            </div>
                         </div>
-                        
-                        <!-- Image preview -->
+
+                        <!-- Image preview carousel -->
                         <div class="mb-4 d-none" id="preview-container">
-                            <label class="form-label">Image Preview</label>
-                            <div class="text-center border rounded p-3">
-                                <img id="image-preview" class="img-fluid" style="max-height: 300px;" src="#" alt="Preview">
+                            <label class="form-label">Image Previews (<span id="current-image">1</span>/<span id="total-images">0</span>)</label>
+                            <div class="position-relative">
+                                <div id="image-carousel" class="carousel-inner border rounded p-3 text-center">
+                                    <!-- Images will be inserted here -->
+                                </div>
+                                <button id="prev-image" class="carousel-control-prev bg-dark bg-opacity-25 rounded-start" type="button">
+                                    <i class="fas fa-chevron-left text-white"></i>
+                                </button>
+                                <button id="next-image" class="carousel-control-next bg-dark bg-opacity-25 rounded-end" type="button">
+                                    <i class="fas fa-chevron-right text-white"></i>
+                                </button>
+                            </div>
+
+                            <!-- Thumbnails -->
+                            <div class="d-flex mt-2 overflow-auto" id="thumbnails-container">
+                                <!-- Thumbnails will be inserted here -->
+                            </div>
+
+                            <!-- Image status -->
+                            <div class="mt-2" id="image-status-container">
+                                <div class="alert alert-warning d-none" id="invalid-images-alert">
+                                    <i class="fas fa-exclamation-triangle me-2"></i>
+                                    <span id="invalid-images-message"></span>
+                                </div>
                             </div>
                         </div>
-                        
+
                         <!-- Output format selection -->
                         <div class="mb-3">
                             <label for="output_format" class="form-label">Output Format</label>
@@ -72,17 +99,17 @@
                             </select>
                             <div class="form-text">Select the primary language in the document for better accuracy</div>
                         </div>
-                        
+
                         <!-- Submit button -->
                         <div class="d-grid">
                             <button type="submit" class="btn btn-primary btn-lg" id="submit-button">
-                                <i class="fas fa-upload me-2"></i> Convert Document
+                                <i class="fas fa-upload me-2"></i> Convert Documents
                             </button>
                         </div>
                     </form>
                 </div>
             </div>
-            
+
             <!-- Tips and instructions -->
             <div class="card mt-4">
                 <div class="card-header">
@@ -110,8 +137,35 @@
                             <i class="fas fa-check-circle text-success me-2"></i>
                             For formatted text documents, choose Word (.docx) or PDF
                         </li>
+                        <li class="list-group-item">
+                            <i class="fas fa-check-circle text-success me-2"></i>
+                            Converting multiple images will combine them in order
+                        </li>
                     </ul>
                 </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal for upload confirmation -->
+<div class="modal fade" id="confirmationModal" tabindex="-1" aria-labelledby="confirmationModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="confirmationModalLabel">Confirm Image Upload</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p id="confirmation-message">Some images exceed the size or resolution limits and will be skipped.</p>
+                <div id="invalid-files-list" class="alert alert-warning">
+                    <!-- Invalid files will be listed here -->
+                </div>
+                <p>Do you want to continue with the valid images?</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="confirm-upload">Continue</button>
             </div>
         </div>
     </div>
@@ -119,48 +173,314 @@
 {% endblock %}
 
 {% block scripts %}
+<style>
+    #image-carousel {
+        height: 300px;
+        position: relative;
+        overflow: hidden;
+    }
+
+    #image-carousel img {
+        max-height: 280px;
+        max-width: 100%;
+        object-fit: contain;
+    }
+
+    .carousel-control-prev, .carousel-control-next {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+    }
+
+    .carousel-control-prev {
+        left: 10px;
+    }
+
+    .carousel-control-next {
+        right: 10px;
+    }
+
+    .thumbnail {
+        width: 80px;
+        height: 60px;
+        object-fit: cover;
+        margin-right: 8px;
+        cursor: pointer;
+        border: 2px solid transparent;
+    }
+
+    .thumbnail.active {
+        border-color: #0d6efd;
+    }
+</style>
+
 <script>
-    // File size validation and preview
-    document.getElementById('image').addEventListener('change', function() {
-        const file = this.files[0];
-        const fileSizeDisplay = document.getElementById('file-size-display');
-        const previewContainer = document.getElementById('preview-container');
-        const imagePreview = document.getElementById('image-preview');
-        const submitButton = document.getElementById('submit-button');
-        
-        // Display file size
-        if (file) {
-            const fileSizeMB = file.size / (1024 * 1024);
-            fileSizeDisplay.textContent = fileSizeMB.toFixed(2) + ' MB';
-            
-            // Check if file exceeds max size
-            if (fileSizeMB > 250) {
-                fileSizeDisplay.classList.add('text-danger');
-                alert('File size exceeds the maximum limit of 250 MB');
-                submitButton.disabled = true;
-            } else {
-                fileSizeDisplay.classList.remove('text-danger');
-                submitButton.disabled = false;
-                
-                // Show image preview
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    imagePreview.src = e.target.result;
-                    previewContainer.classList.remove('d-none');
+    // Global variables to track files
+    const validFiles = [];
+    const invalidFiles = [];
+    const invalidReasons = {};
+    let currentIndex = 0;
+    const maxFileSizeMB = {{ 20 if current_user.is_paid_user else 5 }};
+    const maxFileSize = maxFileSizeMB * 2048 * 2048; // Convert to bytes
+    const maxImageWidth = {{ 6200 if current_user.is_paid_user else 2048 }};
+    const maxImageHeight = {{ 6200 if current_user.is_paid_user else 2048 }};
+    const maxFreeAttempts = {{ remaining_attempts }};
+    const isPaidUser = {{ 'true' if current_user.is_paid_user else 'false' }};
+
+    // DOM elements
+    const fileInput = document.getElementById('images');
+    const totalSizeDisplay = document.getElementById('total-size-display');
+    const previewContainer = document.getElementById('preview-container');
+    const imageCarousel = document.getElementById('image-carousel');
+    const thumbnailsContainer = document.getElementById('thumbnails-container');
+    const currentImageCounter = document.getElementById('current-image');
+    const totalImagesCounter = document.getElementById('total-images');
+    const prevButton = document.getElementById('prev-image');
+    const nextButton = document.getElementById('next-image');
+    const submitButton = document.getElementById('submit-button');
+    const uploadForm = document.getElementById('uploadForm');
+    const confirmationModal = new bootstrap.Modal(document.getElementById('confirmationModal'));
+    const confirmUploadButton = document.getElementById('confirm-upload');
+    const invalidImagesAlert = document.getElementById('invalid-images-alert');
+    const invalidImagesMessage = document.getElementById('invalid-images-message');
+
+    // File processing functions
+    function validateImage(file) {
+        return new Promise((resolve) => {
+            // Check file size
+            if (file.size > maxFileSize) {
+                invalidReasons[file.name] = `File size exceeds maximum of ${maxFileSizeMB} MB`;
+                resolve(false);
+                return;
+            }
+
+            // Check image dimensions
+            const img = new Image();
+            const objectURL = URL.createObjectURL(file);
+
+            img.onload = function() {
+                URL.revokeObjectURL(objectURL);
+
+                if (img.width > maxImageWidth || img.height > maxImageHeight) {
+                    invalidReasons[file.name] = `Image dimensions exceed maximum of ${maxImageWidth}×${maxImageHeight} pixels`;
+                    resolve(false);
+                } else {
+                    resolve(true);
                 }
-                reader.readAsDataURL(file);
+            };
+
+            img.onerror = function() {
+                URL.revokeObjectURL(objectURL);
+                invalidReasons[file.name] = 'Not a valid image file';
+                resolve(false);
+            };
+
+            img.src = objectURL;
+        });
+    }
+
+    async function processFiles(files) {
+        // Reset arrays
+        validFiles.length = 0;
+        invalidFiles.length = 0;
+        Object.keys(invalidReasons).forEach(key => delete invalidReasons[key]);
+
+        // Check if number of files exceeds the limit for free users
+        if (!isPaidUser && files.length > maxFreeAttempts) {
+            alert(`Free users can only upload up to ${maxFreeAttempts} images. Please upgrade to upload more.`);
+            fileInput.value = '';
+            return;
+        }
+
+        let totalSize = 0;
+
+        // Process each file
+        for (let i = 0; i < files.length; i++) {
+            const file = files[i];
+            const isValid = await validateImage(file);
+
+            if (isValid) {
+                validFiles.push(file);
+                totalSize += file.size;
+            } else {
+                invalidFiles.push(file);
+            }
+        }
+
+        // Update total size display
+        totalSizeDisplay.textContent = (totalSize / (2048 * 2048)).toFixed(2) + ' MB';
+
+        // Update UI based on validation results
+        if (validFiles.length > 0) {
+            createImagePreviews();
+            previewContainer.classList.remove('d-none');
+
+            // Show warning for invalid files
+            if (invalidFiles.length > 0) {
+                invalidImagesAlert.classList.remove('d-none');
+                let message = `${invalidFiles.length} image${invalidFiles.length > 1 ? 's' : ''} will be skipped due to size or resolution limits.`;
+                invalidImagesMessage.textContent = message;
+
+                // Prepare confirmation modal content
+                const invalidFilesList = document.getElementById('invalid-files-list');
+                invalidFilesList.innerHTML = '';
+
+                for (const file of invalidFiles) {
+                    const reason = invalidReasons[file.name] || 'Invalid file';
+                    invalidFilesList.innerHTML += `<div><strong>${file.name}</strong>: ${reason}</div>`;
+                }
+
+                // Show confirmation modal
+                confirmationModal.show();
+            } else {
+                invalidImagesAlert.classList.add('d-none');
             }
         } else {
-            fileSizeDisplay.textContent = '0 MB';
             previewContainer.classList.add('d-none');
+            if (files.length > 0) {
+                alert('None of the selected files are valid. Please check file sizes and formats.');
+                fileInput.value = '';
+            }
+        }
+    }
+
+    function createImagePreviews() {
+        // Clear previous content
+        imageCarousel.innerHTML = '';
+        thumbnailsContainer.innerHTML = '';
+
+        // Update counter
+        totalImagesCounter.textContent = validFiles.length;
+        currentImageCounter.textContent = '1';
+        currentIndex = 0;
+
+        // Create previews for each valid file
+        validFiles.forEach((file, index) => {
+            // Create main preview
+            const preview = document.createElement('div');
+            preview.className = 'carousel-item' + (index === 0 ? ' active' : '');
+            preview.dataset.index = index;
+
+            const img = document.createElement('img');
+            img.src = URL.createObjectURL(file);
+            img.className = 'img-fluid';
+            img.onload = function() {
+                URL.revokeObjectURL(this.src);
+            };
+
+            const caption = document.createElement('div');
+            caption.className = 'mt-2';
+            caption.innerHTML = `<small>${file.name} (${(file.size / (2048 * 2048)).toFixed(2)} MB)</small>`;
+
+            preview.appendChild(img);
+            preview.appendChild(caption);
+            imageCarousel.appendChild(preview);
+
+            // Create thumbnail
+            const thumbnail = document.createElement('img');
+            thumbnail.src = URL.createObjectURL(file);
+            thumbnail.className = 'thumbnail' + (index === 0 ? ' active' : '');
+            thumbnail.dataset.index = index;
+            thumbnail.onclick = function() {
+                showImage(parseInt(this.dataset.index));
+            };
+
+            thumbnailsContainer.appendChild(thumbnail);
+        });
+
+        // Show/hide navigation buttons based on number of images
+        if (validFiles.length <= 1) {
+            prevButton.style.display = 'none';
+            nextButton.style.display = 'none';
+        } else {
+            prevButton.style.display = 'flex';
+            nextButton.style.display = 'flex';
+        }
+
+        // Enable submit button
+        submitButton.disabled = false;
+    }
+
+    function showImage(index) {
+        // Hide all carousel items and deactivate thumbnails
+        const items = imageCarousel.querySelectorAll('.carousel-item');
+        items.forEach(item => item.classList.remove('active'));
+
+        const thumbnails = thumbnailsContainer.querySelectorAll('.thumbnail');
+        thumbnails.forEach(thumb => thumb.classList.remove('active'));
+
+        // Show selected item and activate thumbnail
+        const selectedItem = imageCarousel.querySelector(`[data-index="${index}"]`);
+        const selectedThumb = thumbnailsContainer.querySelector(`[data-index="${index}"]`);
+
+        if (selectedItem && selectedThumb) {
+            selectedItem.classList.add('active');
+            selectedThumb.classList.add('active');
+            currentImageCounter.textContent = index + 1;
+            currentIndex = index;
+
+            // Scroll thumbnail into view if needed
+            selectedThumb.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+        }
+    }
+
+    // Event listeners
+    fileInput.addEventListener('change', function() {
+        if (this.files.length > 0) {
+            processFiles(this.files);
+        } else {
+            previewContainer.classList.add('d-none');
+            totalSizeDisplay.textContent = '0 MB';
         }
     });
-    
-    // Form submission
-    document.getElementById('uploadForm').addEventListener('submit', function() {
-        const submitButton = document.getElementById('submit-button');
+
+    prevButton.addEventListener('click', function() {
+        const newIndex = currentIndex > 0 ? currentIndex - 1 : validFiles.length - 1;
+        showImage(newIndex);
+    });
+
+    nextButton.addEventListener('click', function() {
+        const newIndex = currentIndex < validFiles.length - 1 ? currentIndex + 1 : 0;
+        showImage(newIndex);
+    });
+
+    confirmUploadButton.addEventListener('click', function() {
+        confirmationModal.hide();
+    });
+
+    uploadForm.addEventListener('submit', function(e) {
+        if (validFiles.length === 0) {
+            e.preventDefault();
+            alert('Please select at least one valid image file.');
+            return;
+        }
+
+        // Create a FormData object to hold the valid files
+        const formData = new FormData();
+
+        // Add valid files with indexed names
+        validFiles.forEach((file, index) => {
+            formData.append(`image_${index}`, file);
+        });
+
+        // Add other form fields
+        formData.append('output_format', document.getElementById('output_format').value);
+        formData.append('language', document.getElementById('language').value);
+
+        // Update button state
         submitButton.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Processing...';
         submitButton.disabled = true;
+
+        // Submit the form with the valid files
+        // Note: This uses the standard form submission for simplicity
+        // In a real implementation, you might want to use fetch() API for more control
     });
 </script>
 {% endblock %}

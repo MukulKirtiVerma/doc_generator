@@ -3,18 +3,38 @@
 {% block title %}My Documents - DocGen{% endblock %}
 
 {% block content %}
-<div class="container">
+
     <div class="row mb-4">
-        <div class="col-md-8">
-            <h1 class="display-5">My Documents</h1>
-            <p class="lead">View and manage your document conversion history</p>
-        </div>
-        <div class="col-md-4 text-md-end align-self-center">
+    <div class="col-md-8">
+        <h1 class="display-5">My Documents</h1>
+        <p class="lead">View and manage your document conversion history</p>
+    </div>
+    <div class="col-md-4 text-md-end align-self-center">
+        <div class="btn-group" role="group">
+            <a href="{{ url_for('main.documents') }}" class="btn btn-primary">
+                <i class="fas fa-file me-2"></i> Individual Documents
+            </a>
+            <a href="{{ url_for('main.documents', show_batches='true') }}" class="btn btn-outline-primary">
+                <i class="fas fa-layer-group me-2"></i> Batch Processes
+            </a>
             <a href="{{ url_for('main.upload') }}" class="btn btn-primary">
-                <i class="fas fa-plus me-2"></i> New Document
+                <i class="fas fa-plus me-2"></i> New Conversion
             </a>
         </div>
     </div>
+</div>
+<!--    <div class="container">-->
+<!--    <div class="row mb-4">-->
+<!--        <div class="col-md-8">-->
+<!--            <h1 class="display-5">My Documents</h1>-->
+<!--            <p class="lead">View and manage your document conversion history</p>-->
+<!--        </div>-->
+<!--        <div class="col-md-4 text-md-end align-self-center">-->
+<!--            <a href="{{ url_for('main.upload') }}" class="btn btn-primary">-->
+<!--                <i class="fas fa-plus me-2"></i> New Document-->
+<!--            </a>-->
+<!--        </div>-->
+<!--    </div>-->
     
     <!-- Filter & Search Bar -->
     <div class="row mb-4">

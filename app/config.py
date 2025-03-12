@@ -27,6 +27,18 @@ class Config:
     # Anthropic API
     ANTHROPIC_API_KEY = os.environ.get('ANTHROPIC_API_KEY')
 
+    # File limits for free users
+    FREE_USER_MAX_FILE_SIZE = 5 * 1024 * 1024  # 5 MB
+    FREE_USER_MAX_RESOLUTION = 1024  # 1024x1024 pixels
+
+    # File limits for paid users
+    PAID_USER_MAX_FILE_SIZE = 20 * 1024 * 1024  # 20 MB
+    PAID_USER_MAX_RESOLUTION = 6200  # 6200x6200 pixels
+
+    # Batch processing settings
+    BATCH_PROCESSING_ENABLED = True
+    MAX_BATCH_SIZE = 10  # Maximum number of files in a batch
+
     # Regional settings
     DEFAULT_CURRENCY = os.environ.get('DEFAULT_CURRENCY', 'USD')  # USD or INR
     DEFAULT_PAYMENT_GATEWAY = os.environ.get('DEFAULT_PAYMENT_GATEWAY', 'razorpay')  # 'stripe' or 'razorpay'

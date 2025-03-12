@@ -1,0 +1,289 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Batch Processing - DocGen{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0">Batch Conversion Results</h4>
+                    <span id="batch-status-badge" class="badge {% if batch.status == 'completed' %}bg-success{% elif batch.status == 'processing' %}bg-warning text-dark{% else %}bg-secondary{% endif %}">
+                        {{ batch.status|capitalize }}
+                    </span>
+                </div>
+                <div class="card-body">
+                    <!-- Batch status overview -->
+                    <div class="mb-4">
+                        <div class="progress mb-3">
+                            {% set progress = ((batch.completed_documents + batch.failed_documents) / batch.total_documents * 100)|int if batch.total_documents > 0 else 0 %}
+                            <div id="batch-progress" class="progress-bar {% if batch.status == 'completed' %}bg-success{% elif batch.failed_documents > 0 %}bg-warning{% else %}bg-primary progress-bar-striped progress-bar-animated{% endif %}" 
+                                 role="progressbar" style="width: {{ progress }}%;" 
+                                 aria-valuenow="{{ progress }}" aria-valuemin="0" aria-valuemax="100">
+                                {{ progress }}%
+                            </div>
+                        </div>
+                        
+                        <div class="row text-center">
+                            <div class="col-md-4">
+                                <div class="card bg-light mb-2">
+                                    <div class="card-body py-2">
+                                        <h5 class="mb-0" id="total-count">{{ batch.total_documents }}</h5>
+                                        <small class="text-muted">Total Images</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card bg-success text-white mb-2">
+                                    <div class="card-body py-2">
+                                        <h5 class="mb-0" id="completed-count">{{ batch.completed_documents }}</h5>
+                                        <small>Completed</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card {% if batch.failed_documents > 0 %}bg-danger text-white{% else %}bg-light{% endif %} mb-2">
+                                    <div class="card-body py-2">
+                                        <h5 class="mb-0" id="failed-count">{{ batch.failed_documents }}</h5>
+                                        <small>Failed</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Processing animation for active batches -->
+                    {% if batch.status == 'processing' %}
+                        <div class="text-center mb-4" id="processing-animation">
+                            <div class="spinner-border text-primary mb-3" role="status">
+                                <span class="visually-hidden">Processing...</span>
+                            </div>
+                            <p class="text-muted">Processing your images... This may take several minutes.</p>
+                        </div>
+                    {% endif %}
+
+                    <!-- Download button for completed batches -->
+                    {% if batch.status == 'completed' and batch.completed_documents > 0 %}
+                        <div class="text-center mb-4" id="download-section">
+                            <div class="alert alert-success">
+                                <i class="fas fa-check-circle me-2"></i> 
+                                All images have been processed! You can now download the results.
+                            </div>
+                            
+                            <a href="{{ url_for('main.download_batch', batch_id=batch.id) }}" class="btn btn-primary btn-lg">
+                                <i class="fas fa-download me-2"></i> Download Results
+                                {% if batch.completed_documents > 1 %}
+                                    as ZIP
+                                {% endif %}
+                            </a>
+                        </div>
+                    {% endif %}
+                    
+                    <!-- Individual document status list -->
+                    <h5 class="mb-3">Documents in this batch:</h5>
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>#</th>
+                                    <th>Filename</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="documents-list">
+                                {% for doc in documents %}
+                                <tr id="document-row-{{ doc.id }}">
+                                    <td>{{ loop.index }}</td>
+                                    <td>{{ doc.original_filename }}</td>
+                                    <td id="document-status-{{ doc.id }}">
+                                        {% if doc.status == 'completed' %}
+                                            <span class="badge bg-success">Completed</span>
+                                        {% elif doc.status == 'processing' %}
+                                            <span class="badge bg-warning text-dark">Processing</span>
+                                        {% elif doc.status == 'failed' %}
+                                            <span class="badge bg-danger">Failed</span>
+                                            {% if doc.error_message %}
+                                                <button class="btn btn-sm btn-link text-danger p-0 ms-1" 
+                                                        data-bs-toggle="tooltip" 
+                                                        title="{{ doc.error_message }}">
+                                                    <i class="fas fa-info-circle"></i>
+                                                </button>
+                                            {% endif %}
+                                        {% else %}
+                                            <span class="badge bg-secondary">Pending</span>
+                                        {% endif %}
+                                    </td>
+                                    <td id="document-actions-{{ doc.id }}">
+                                        {% if doc.status == 'completed' %}
+                                            <a href="{{ url_for('main.download_document', document_id=doc.id) }}" 
+                                               class="btn btn-sm btn-outline-success">
+                                                <i class="fas fa-download"></i>
+                                            </a>
+                                        {% elif doc.status == 'failed' %}
+                                            <a href="{{ url_for('main.process_document', document_id=doc.id) }}" 
+                                               class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-eye"></i> Details
+                                            </a>
+                                        {% else %}
+                                            <button class="btn btn-sm btn-outline-secondary" disabled>
+                                                <i class="fas fa-hourglass-half"></i> Wait
+                                            </button>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <div class="mt-4 text-center">
+                        <a href="{{ url_for('main.dashboard') }}" class="btn btn-outline-primary">
+                            <i class="fas fa-arrow-left me-2"></i> Return to Dashboard
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{% if batch.status != 'completed' %}
+<script>
+    // Poll for batch status updates
+    const batchId = "{{ batch.id }}";
+    const statusEndpoint = "{{ url_for('main.batch_status', batch_id=batch.id) }}";
+    let pollingInterval;
+    
+    function updateBatchStatus() {
+        fetch(statusEndpoint)
+            .then(response => response.json())
+            .then(data => {
+                // Update progress bar
+                const progress = data.total > 0 ? Math.round(((data.completed + data.failed) / data.total) * 100) : 0;
+                const progressBar = document.getElementById('batch-progress');
+                progressBar.style.width = `${progress}%`;
+                progressBar.textContent = `${progress}%`;
+                
+                if (data.failed > 0) {
+                    progressBar.classList.remove('bg-primary', 'bg-success', 'progress-bar-striped', 'progress-bar-animated');
+                    progressBar.classList.add('bg-warning');
+                }
+                
+                // Update counters
+                document.getElementById('completed-count').textContent = data.completed;
+                document.getElementById('failed-count').textContent = data.failed;
+                
+                // Update status badge
+                const statusBadge = document.getElementById('batch-status-badge');
+                statusBadge.textContent = data.status.charAt(0).toUpperCase() + data.status.slice(1);
+                
+                if (data.status === 'completed') {
+                    statusBadge.classList.remove('bg-warning', 'bg-secondary', 'text-dark');
+                    statusBadge.classList.add('bg-success');
+                    
+                    // Remove processing animation
+                    const processingAnimation = document.getElementById('processing-animation');
+                    if (processingAnimation) {
+                        processingAnimation.remove();
+                    }
+                    
+                    // Show download section
+                    if (data.completed > 0) {
+                        const downloadSection = document.createElement('div');
+                        downloadSection.id = 'download-section';
+                        downloadSection.className = 'text-center mb-4';
+                        downloadSection.innerHTML = `
+                            <div class="alert alert-success">
+                                <i class="fas fa-check-circle me-2"></i> 
+                                All images have been processed! You can now download the results.
+                            </div>
+                            
+                            <a href="${window.location.pathname.replace('/process/batch/', '/download/batch/')}" class="btn btn-primary btn-lg">
+                                <i class="fas fa-download me-2"></i> Download Results
+                                ${data.completed > 1 ? 'as ZIP' : ''}
+                            </a>
+                        `;
+                        
+                        // Add after progress section
+                        const progressSection = document.querySelector('.progress').parentElement;
+                        progressSection.parentElement.insertBefore(downloadSection, progressSection.nextSibling);
+                    }
+                    
+                    // Stop polling
+                    clearInterval(pollingInterval);
+                }
+                
+                // Update individual document statuses
+                data.documents.forEach(doc => {
+                    const statusCell = document.getElementById(`document-status-${doc.id}`);
+                    const actionsCell = document.getElementById(`document-actions-${doc.id}`);
+                    
+                    if (statusCell) {
+                        let statusHtml = '';
+                        
+                        if (doc.status === 'completed') {
+                            statusHtml = `<span class="badge bg-success">Completed</span>`;
+                            
+                            if (actionsCell) {
+                                actionsCell.innerHTML = `
+                                    <a href="/download/${doc.id}" class="btn btn-sm btn-outline-success">
+                                        <i class="fas fa-download"></i>
+                                    </a>
+                                `;
+                            }
+                        } else if (doc.status === 'processing') {
+                            statusHtml = `<span class="badge bg-warning text-dark">Processing</span>`;
+                        } else if (doc.status === 'failed') {
+                            statusHtml = `<span class="badge bg-danger">Failed</span>`;
+                            
+                            if (doc.error_message) {
+                                statusHtml += `
+                                    <button class="btn btn-sm btn-link text-danger p-0 ms-1" 
+                                            data-bs-toggle="tooltip" 
+                                            title="${doc.error_message}">
+                                        <i class="fas fa-info-circle"></i>
+                                    </button>
+                                `;
+                            }
+                            
+                            if (actionsCell) {
+                                actionsCell.innerHTML = `
+                                    <a href="/process/${doc.id}" class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-eye"></i> Details
+                                    </a>
+                                `;
+                            }
+                        } else {
+                            statusHtml = `<span class="badge bg-secondary">Pending</span>`;
+                        }
+                        
+                        statusCell.innerHTML = statusHtml;
+                    }
+                });
+                
+                // Initialize tooltips
+                const tooltips = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+                tooltips.forEach(tooltip => new bootstrap.Tooltip(tooltip));
+            })
+            .catch(error => {
+                console.error('Error fetching batch status:', error);
+            });
+    }
+    
+    // Initial update
+    updateBatchStatus();
+    
+    // Start polling (every 3 seconds)
+    pollingInterval = setInterval(updateBatchStatus, 3000);
+    
+    // Stop polling when user leaves the page
+    window.addEventListener('beforeunload', () => {
+        clearInterval(pollingInterval);
+    });
+</script>
+{% endif %}
+{% endblock %}
